@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: staynest-backend
+    env: php
+    plan: free
+    buildCommand: |
+      composer install
+      php artisan key:generate
+      php artisan migrate --force
+      php artisan config:cache
+    startCommand: php artisan serve --host 0.0.0.0 --port 10000
