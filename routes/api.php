@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AmenityController;
+use App\Http\Controllers\AboutController;
 use App\Http\Controllers\RoomServiceOrderController;
 use App\Http\Controllers\BookingStatusHistoryController;
 use App\Http\Controllers\RoomTypeController;
@@ -42,6 +43,11 @@ use App\Models\Guest;
 use App\Models\Payment;
 use App\Models\User;
 // routes/api.php
+// About page data routes
+Route::get('/home-page', [AboutController::class, 'getHomePageData']);
+Route::get('/rooms/count', [AboutController::class, 'getRoomsCount']);
+Route::get('/guests/count', [AboutController::class, 'getGuestsCount']);
+Route::get('/staff/count', [AboutController::class, 'getStaffCount']);
 Route::apiResource('legal-mentions', LegalMentionController::class);
 Route::apiResource('faqs', FaqController::class);
 Route::post('faqs/reorder', [FaqController::class, 'reorder']);
@@ -231,6 +237,8 @@ Route::get('/guest/rooms/{id}/reviews', [GuestRoomController::class, 'getRoomRev
 Route::post('/guest/rooms/{id}/reviews', [GuestRoomController::class, 'submitReview'])->middleware('auth:guest');
 Route::middleware('auth:guest')->group(function () {
     // إنشاء intent للدفع
+     Route::get('/guest/user-info', [GuestRoomController::class, 'getUserInfo']);
+    Route::put('/guest/user-info', [GuestRoomController::class, 'updateUserInfo']);
     Route::post('/guest/bookings/{booking}/payment-intent', [GuestRoomController::class, 'createPaymentIntent']);
     
     // تنفيذ عملية الدفع
@@ -256,15 +264,8 @@ Route::middleware('auth:guest')->group(function () {
 Route::get('/rooms/{roomId}/reviews', [GuestProfileController::class, 'getRoomReviews']);
 Route::middleware('auth:guest')->post('/guest/set-password', [GuestAuthController::class, 'setPassword']);
 Route::get('/guest/rooms/{id}/booked-dates', [GuestRoomController::class, 'getBookedDates']);
-Route::middleware('auth:sanctum')->group(function () {
-    // Notifications
-    Route::get('/notifications', [NotificationController::class, 'index']);
-    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
-    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
-    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
-    Route::delete('/notifications/clear-all', [NotificationController::class, 'clearAll']); // Fixed route
-    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
-});
+Route::get('/guest/room-types', [GuestRoomController::class, 'getRoomTypes']);
+
 // In routes/api.php
 Route::get('/test-notifications', function (Request $request) {
     $user = $request->user();
@@ -283,3 +284,44 @@ Route::get('/test-notifications', function (Request $request) {
     ]);
 })->middleware('auth:sanctum');
 Route::get('/debug-images', [RoomServiceItemController::class, 'debugImages']);
+Route::middleware('auth:sanctum')->group(function () {
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
+    Route::delete('/notifications/clear-all', [NotificationController::class, 'clearAll']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+});
+Route::get('/debug-notifications-detailed', function (Request $request) {
+    $user = $request->user();
+    
+    if (!$user) {
+        return response()->json(['error' => 'Not authenticated'], 401);
+    }
+    
+    $notifications = $user->notifications()
+        ->orderBy('created_at', 'desc')
+        ->get();
+    
+    $formattedNotifications = $notifications->map(function ($notification) {
+        return [
+            'id' => $notification->id,
+            'type' => $notification->type,
+            'data' => $notification->data,
+            'read_at' => $notification->read_at,
+            'created_at' => $notification->created_at,
+            'updated_at' => $notification->updated_at,
+            'parsed_data' => is_string($notification->data) ? json_decode($notification->data, true) : $notification->data
+        ];
+    });
+    
+    return response()->json([
+        'user_id' => $user->id,
+        'user_email' => $user->email,
+        'notifications_count' => $notifications->count(),
+        'notifications' => $formattedNotifications,
+        'unread_count' => $user->unreadNotifications()->count()
+    ]);
+})->middleware('auth:sanctum');
+

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Traits\CanResetGuestPassword;
+use App\Notifications\CustomResetPasswordNotification;
 use App\Notifications\GuestResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -44,16 +45,13 @@ class Guest extends Authenticatable
     {
         return $this->hasMany(RoomServiceOrder::class, 'guest_id');
     }
-    public function sendPasswordResetNotification($token)
-    {
-        // رابط React frontend
-        $url = config('app.frontend_url') . "/reset-password?token=$token&email={$this->email}";
-
-        $this->notify(new \App\Notifications\ResetPasswordCustom($url));
-    }
     public function contactMessages()
     {
         return $this->hasMany(ContactMessage::class, 'user_id', 'user_id');
+    }
+      public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new CustomResetPasswordNotification($token));
     }
 }
 

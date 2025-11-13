@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use App\Models\Guest;
 
 class ForgotPasswordController extends Controller
 {
@@ -25,10 +26,26 @@ class ForgotPasswordController extends Controller
                 ], 422);
             }
 
-            // ✅ Use guests broker
+            // Check if guest exists first
+            $guest = Guest::where('email', $request->email)->first();
+
+            if (!$guest) {
+                // Return success even if email doesn't exist for security
+                return response()->json([
+                    'message' => 'If that email address exists in our system, we\'ve sent a password reset link to it.'
+                ], 200);
+            }
+
+            // ✅ Use guests broker - this will trigger the custom notification
             $response = Password::broker('guests')->sendResetLink(
                 $request->only('email')
             );
+
+            Log::info('Password reset link attempt', [
+                'email' => $request->email,
+                'response' => $response,
+                'guest_exists' => !!$guest
+            ]);
 
             if ($response === Password::RESET_LINK_SENT) {
                 return response()->json([
@@ -36,10 +53,10 @@ class ForgotPasswordController extends Controller
                 ], 200);
             }
 
+            // For security, don't reveal if email doesn't exist
             return response()->json([
-                'message' => 'Unable to send reset link',
-                'errors' => ['email' => [trans($response)]]
-            ], 400);
+                'message' => 'If that email address exists in our system, we\'ve sent a password reset link to it.'
+            ], 200);
 
         } catch (\Exception $e) {
             Log::error('Guest Password Reset Error: ' . $e->getMessage());

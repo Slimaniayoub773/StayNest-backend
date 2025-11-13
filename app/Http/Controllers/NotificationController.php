@@ -13,47 +13,49 @@ class NotificationController extends Controller
      * Get all notifications for the authenticated user
      */
     public function index(Request $request): JsonResponse
-    {
-        try {
-            $user = $request->user();
-            
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'User not authenticated'
-                ], 401);
-            }
-
-            $perPage = $request->get('per_page', 20);
-
-            $notifications = $user->notifications()
-                ->orderBy('created_at', 'desc')
-                ->paginate($perPage);
-
-            return response()->json([
-                'success' => true,
-                'data' => $notifications->items(),
-                'pagination' => [
-                    'current_page' => $notifications->currentPage(),
-                    'per_page' => $notifications->perPage(),
-                    'total' => $notifications->total(),
-                    'last_page' => $notifications->lastPage(),
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Notification fetch error', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
+{
+    try {
+        $user = $request->user();
+        
+        if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching notifications',
-                'error' => $e->getMessage()
-            ], 500);
+                'message' => 'User not authenticated'
+            ], 401);
         }
+
+        $perPage = $request->get('per_page', 20);
+
+        $notifications = $user->notifications()
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+
+        // Retournez une structure cohérente
+        return response()->json([
+            'success' => true,
+            'data' => $notifications->items(),
+            'notifications' => $notifications->items(), // Pour compatibilité
+            'pagination' => [
+                'current_page' => $notifications->currentPage(),
+                'per_page' => $notifications->perPage(),
+                'total' => $notifications->total(),
+                'last_page' => $notifications->lastPage(),
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Notification fetch error', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching notifications',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * Mark a notification as read
@@ -159,40 +161,36 @@ class NotificationController extends Controller
         }
     }
 
-    /**
-     * Clear all notifications
-     */
-    public function clearAll(Request $request): JsonResponse
-    {
-        try {
-            $user = $request->user();
-            
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'User not authenticated'
-                ], 401);
-            }
-
-            $user->notifications()->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'All notifications cleared successfully'
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Clear all notifications error', [
-                'error' => $e->getMessage()
-            ]);
-
+   public function clearAll(Request $request): JsonResponse
+{
+    try {
+        $user = $request->user();
+        
+        if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error clearing notifications',
-                'error' => $e->getMessage()
-            ], 500);
+                'message' => 'User not authenticated'
+            ], 401);
         }
-    }
 
+        $user->notifications()->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'All notifications cleared successfully'
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Clear all notifications error', [
+            'error' => $e->getMessage()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Error clearing notifications',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
     /**
      * Get unread notifications count
      */

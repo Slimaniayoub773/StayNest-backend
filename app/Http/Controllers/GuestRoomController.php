@@ -116,10 +116,7 @@ class GuestRoomController extends Controller
         
     } catch (\Exception $e) {
         // Notify system error
-        $this->notificationService->notifySystemIssue(
-            "Error retrieving rooms: " . $e->getMessage(),
-            'error'
-        );
+       
         
         return response()->json([
             'success' => false,
@@ -315,10 +312,7 @@ class GuestRoomController extends Controller
 
         if (!$isAvailable) {
             // Notify about booking conflict
-            $this->notificationService->notifySystemIssue(
-                "Booking conflict detected for Room {$room->room_number}",
-                'warning'
-            );
+        
             
             return response()->json([
                 'success' => false,
@@ -474,10 +468,7 @@ class GuestRoomController extends Controller
 
     } catch (\Exception $e) {
         // Notify system error
-        $this->notificationService->notifySystemIssue(
-            "Booking creation failed: " . $e->getMessage(),
-            'error'
-        );
+        
         
         return response()->json([
             'success' => false,
@@ -485,7 +476,120 @@ class GuestRoomController extends Controller
         ], 500);
     }
 }
+public function getRoomTypes()
+{
+    try {
+        $roomTypes = RoomType::select(
+                'room_types.id',
+                'room_types.name',
+                'room_types.description'
+            )
+            ->join('rooms', 'room_types.id', '=', 'rooms.type_id')
+            ->where('rooms.status', 'available')
+            ->groupBy('room_types.id', 'room_types.name', 'room_types.description')
+            ->get();
 
+        return response()->json([
+            'success' => true,
+            'data' => $roomTypes,
+            'message' => 'Room types retrieved successfully'
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to retrieve room types: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+ public function getUserInfo(Request $request)
+    {
+        try {
+            $user = Auth::guard('guest')->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'identification_number' => $user->identification_number,
+                    'created_at' => $user->created_at,
+                ],
+                'message' => 'User information retrieved successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to retrieve user info: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve user information'
+            ], 500);
+        }
+    }
+
+    /**
+     * Update user information
+     */
+    public function updateUserInfo(Request $request)
+    {
+        try {
+            $user = Auth::guard('guest')->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'name' => 'sometimes|string|max:255',
+                'phone' => 'sometimes|string|max:20',
+                'identification_number' => 'sometimes|string|max:50',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation error',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $user->update($request->only(['name', 'phone', 'identification_number']));
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'identification_number' => $user->identification_number,
+                ],
+                'message' => 'User information updated successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to update user info: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update user information'
+            ], 500);
+        }
+    }
     /**
      * Calculate price for a room
      */
@@ -615,7 +719,7 @@ class GuestRoomController extends Controller
                 'booking_id' => $bookingId,
                 'payment_method' => $request->payment_method,
                 'amount' => $booking->total_price,
-                'status' => 'completed',
+                'status' => $request->payment_method === 'credit_card' ? 'completed' : 'pending',
                 'transaction_id' => $paymentResult['transaction_id'],
                 'receipt_url' => $paymentResult['receipt_url'],
                 'payment_date' => now(),
@@ -629,15 +733,25 @@ class GuestRoomController extends Controller
             ]);
 
             // Update booking status
-            $booking->update([
-                'payment_status' => 'paid',
-                'booking_status' => 'confirmed'
-            ]);
+if ($request->payment_method === 'credit_card') {
+    $booking->update([
+        'payment_status' => 'paid',
+        'booking_status' => 'confirmed'
+    ]);
 
-            // Update room status
-            $booking->room->update([
-                'status' => 'booked'
-            ]);
+    // Update room status only for completed payments
+    $booking->room->update([
+        'status' => 'booked'
+    ]);
+} else if ($request->payment_method === 'bank_transfer') {
+    $booking->update([
+        'payment_status' => 'pending',   // حالة الدفع قيد الانتظار
+        'booking_status' => 'pending'
+    ]);
+
+    // لا نغير حالة الغرفة بعد
+}
+
 
             // Generate invoice
             $invoice = $this->generateInvoice($payment);
@@ -648,25 +762,23 @@ class GuestRoomController extends Controller
             // 🔔 Send booking confirmation notification
             $this->notifyBookingConfirmed($booking);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Payment processed successfully',
-                'data' => [
-                    'payment_id' => $payment->id,
-                    'invoice_number' => $invoice->invoice_number,
-                    'receipt_url' => $payment->receipt_url,
-                    'booking_status' => 'confirmed',
-                    'payment_status' => 'paid',
-                    'room_status' => 'booked'
-                ]
-            ]);
+                    return response()->json([
+            'success' => true,
+            'message' => $request->payment_method === 'credit_card' ? 'Payment processed successfully' : 'Bank transfer submitted',
+            'data' => [
+                'payment_id' => $payment->id,
+                'invoice_number' => $invoice->invoice_number,
+                'receipt_url' => $payment->receipt_url,
+                'booking_status' => $request->payment_method === 'credit_card' ? 'confirmed' : 'pending',
+                'payment_status' => $request->payment_method === 'credit_card' ? 'paid' : 'pending',
+                'room_status' => $request->payment_method === 'credit_card' ? 'booked' : 'pending',
+                'payment_method' => $request->payment_method, // ✅ مهم جداً
+                'transaction_id' => $payment->transaction_id
+            ]
+        ]);
 
         } catch (\Exception $e) {
             // Notify payment system error
-            $this->notificationService->notifySystemIssue(
-                "Payment processing failed for booking #{$bookingId}: " . $e->getMessage(),
-                'error'
-            );
             
             return response()->json([
                 'success' => false,
@@ -743,10 +855,7 @@ public function cancelBooking(Request $request, $bookingId)
 
     } catch (\Exception $e) {
         // 🔔 إشعار بوجود مشكلة في النظام
-        $this->notificationService->notifySystemIssue(
-            "Booking cancellation failed: " . $e->getMessage(),
-            'error'
-        );
+       
 
         return response()->json([
             'success' => false,
@@ -1074,10 +1183,6 @@ public function cancelBooking(Request $request, $bookingId)
             ]);
 
         } catch (\Exception $e) {
-            $this->notificationService->notifySystemIssue(
-                "Review submission failed: " . $e->getMessage(),
-                'error'
-            );
             
             return response()->json([
                 'success' => false,
@@ -1194,10 +1299,6 @@ public function cancelBooking(Request $request, $bookingId)
             ]);
 
         } catch (\Exception $e) {
-            $this->notificationService->notifySystemIssue(
-                "Guest check-in failed: " . $e->getMessage(),
-                'error'
-            );
             
             return response()->json([
                 'success' => false,
@@ -1262,10 +1363,7 @@ public function cancelBooking(Request $request, $bookingId)
             ]);
 
         } catch (\Exception $e) {
-            $this->notificationService->notifySystemIssue(
-                "Guest check-out failed: " . $e->getMessage(),
-                'error'
-            );
+            
             
             return response()->json([
                 'success' => false,
@@ -1326,10 +1424,6 @@ public function cancelBooking(Request $request, $bookingId)
             ]);
 
         } catch (\Exception $e) {
-            $this->notificationService->notifySystemIssue(
-                "Room service request failed: " . $e->getMessage(),
-                'error'
-            );
             
             return response()->json([
                 'success' => false,
@@ -1568,7 +1662,7 @@ public function cancelBooking(Request $request, $bookingId)
 {
     $notification = new \App\Notifications\BookingNotification(
         booking: $booking,
-        title: '✅ Booking Confirmed',
+        title: 'Booking Confirmed',
         message: "Booking #{$booking->id} has been confirmed for room {$booking->room->room_number}",
         category: 'booking',
         priority: 'normal',

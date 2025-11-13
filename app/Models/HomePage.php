@@ -17,6 +17,7 @@ class HomePage extends Model
         'phone',
         'email',
         'description',
+        'years_experience',
         'map',
         'facebook',
         'instagram',

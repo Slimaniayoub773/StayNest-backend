@@ -41,19 +41,19 @@
         {
             try {
                 $validator = Validator::make($request->all(), [
-                    'name' => 'required|string|max:255',
-                    'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240',
-                    'address' => 'nullable|string|max:500',
-                    'city' => 'nullable|string|max:255',
-                    'phone' => 'nullable|string|max:20',
-                    'email' => 'nullable|email|max:255',
-                    'description' => 'nullable|string',
-                    'map' => 'nullable|string',
-                    'facebook' => 'nullable|url|max:255',
-                    'instagram' => 'nullable|url|max:255',
-                    'whatsapp' => 'nullable|string|max:255',
-                ]);
-
+    'name' => 'required|string|max:255',
+    'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240',
+    'address' => 'nullable|string|max:500',
+    'city' => 'nullable|string|max:255',
+    'phone' => 'nullable|string|max:20',
+    'email' => 'nullable|email|max:255',
+    'description' => 'nullable|string',
+    'years_experience' => 'nullable|integer|min:0|max:100', // Add this line
+    'map' => 'nullable|string',
+    'facebook' => 'nullable|url|max:255',
+    'instagram' => 'nullable|url|max:255',
+    'whatsapp' => 'nullable|string|max:255',
+]);
                 if ($validator->fails()) {
                     return response()->json([
                         'success' => false,
@@ -107,18 +107,19 @@
                 $homePage = HomePage::findOrFail($id);
 
                 $validator = Validator::make($request->all(), [
-                    'name' => 'required|string|max:255',
-                    'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240',
-                    'address' => 'nullable|string|max:500',
-                    'city' => 'nullable|string|max:255',
-                    'phone' => 'nullable|string|max:20',
-                    'email' => 'nullable|email|max:255',
-                    'description' => 'nullable|string',
-                    'map' => 'nullable|string',
-                    'facebook' => 'nullable|url|max:255',
-                    'instagram' => 'nullable|url|max:255',
-                    'whatsapp' => 'nullable|string|max:255',
-                ]);
+    'name' => 'required|string|max:255',
+    'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240',
+    'address' => 'nullable|string|max:500',
+    'city' => 'nullable|string|max:255',
+    'phone' => 'nullable|string|max:20',
+    'email' => 'nullable|email|max:255',
+    'description' => 'nullable|string',
+    'years_experience' => 'nullable|integer|min:0|max:100', // Add this line
+    'map' => 'nullable|string',
+    'facebook' => 'nullable|url|max:255',
+    'instagram' => 'nullable|url|max:255',
+    'whatsapp' => 'nullable|string|max:255',
+]);
 
                 if ($validator->fails()) {
                     return response()->json([

@@ -183,10 +183,11 @@
             <h1>StayNest</h1>
             <p>Response to Your Inquiry</p>
         </div>
-            
+        
+        <div class="content">
             <p class="greeting">Dear {{ $contactMessage->name }},</p>
             
-            <p class="message">Thank you for contacting StayNest. Here is our response to your inquiry:</p>
+            <p class="message">Thank you for contacting StayNest. We appreciate you reaching out to us and have carefully reviewed your inquiry.</p>
             
             <div class="response-container">
                 <div class="response-title">Our Response:</div>
@@ -200,10 +201,15 @@
             
             <div class="divider"></div>
             
-            <p class="message">If you have any further questions, please don't hesitate to contact us. We're here to help!</p>
+            <p class="message">If you have any further questions or need additional assistance, please don't hesitate to contact us. We're here to help!</p>
+            
+            <p class="message">We look forward to welcoming you to StayNest.</p>
         </div>
         
         <div class="footer">
+            <div class="logo-container">
+                <span class="hotel-name">StayNest</span>
+            </div>
             <p class="signature">Best regards,<br>The StayNest Team</p>
             <div class="contact-info">
                 <p>Phone: +212 636847568 | Email: support@StayNest.com</p>
