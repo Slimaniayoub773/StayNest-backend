@@ -16,7 +16,7 @@ return new class extends Migration
     $table->string('name_ar');
     $table->string('name_en');
     $table->text('description')->nullable();
-    $table->boolean('is_food')->default(true);
+    $table->boolean('is_food')->default(true); 
     $table->string('available_hours')->nullable();
     $table->timestamps();
 });
