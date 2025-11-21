@@ -36,9 +36,8 @@ class RoomImageController extends Controller
     $room = Room::findOrFail($roomId);
 
     if ($request->hasFile('image')) {
-        $path = $request->file('image')->store('room_images', 'public');
-        $url = asset("storage/$path"); // Use asset() helper for proper URL
-
+        $path = $request->file('image')->store('room_images', 's3');
+$url = Storage::disk('s3')->url($path);
         if ($request->input('is_primary', false)) {
             RoomImage::where('room_id', $roomId)
                 ->where('is_primary', true)
@@ -87,10 +86,9 @@ class RoomImageController extends Controller
     $room = Room::findOrFail($roomId);
     $image = RoomImage::where('room_id', $roomId)->findOrFail($imageId);
 
-    // Delete the file from storage
-    $path = str_replace('/storage', 'public', parse_url($image->image_url, PHP_URL_PATH));
-    Storage::delete($path);
-
+    // Delete the file from S3 storage
+$path = str_replace(Storage::disk('s3')->url(''), '', $image->image_url);
+Storage::disk('s3')->delete($path);
     // Delete the record
     $image->delete();
 
