@@ -365,3 +365,33 @@ Route::get('/images/proxy/{roomId}/{imageId}', function ($roomId, $imageId) {
         return response()->json(['error' => 'Server error: ' . $e->getMessage()], 500);
     }
 });
+Route::get('/debug-images/{roomId}', function ($roomId) {
+    $images = \App\Models\RoomImage::where('room_id', $roomId)->get();
+    
+    return response()->json([
+        'room_id' => $roomId,
+        'total_images' => $images->count(),
+        'images' => $images->map(function($image) {
+            return [
+                'id' => $image->id,
+                'image_url' => $image->image_url,
+                'is_primary' => $image->is_primary,
+                'created_at' => $image->created_at
+            ];
+        })
+    ]);
+});
+Route::get('/debug-all-images', function () {
+    $images = \App\Models\RoomImage::all();
+    
+    return response()->json([
+        'total_images' => $images->count(),
+        'images_by_room' => $images->groupBy('room_id')->map(function($roomImages, $roomId) {
+            return [
+                'room_id' => $roomId,
+                'count' => $roomImages->count(),
+                'image_ids' => $roomImages->pluck('id')
+            ];
+        })
+    ]);
+});
