@@ -325,7 +325,6 @@ Route::get('/debug-notifications-detailed', function (Request $request) {
         'unread_count' => $user->unreadNotifications()->count()
     ]);
 })->middleware('auth:sanctum');
-
 Route::get('/images/proxy/{roomId}/{imageId}', function ($roomId, $imageId) {
     try {
         \Log::info("Proxy request for room: $roomId, image: $imageId");
@@ -333,21 +332,42 @@ Route::get('/images/proxy/{roomId}/{imageId}', function ($roomId, $imageId) {
         $image = \App\Models\RoomImage::where('room_id', $roomId)->findOrFail($imageId);
         \Log::info("Found image record:", ['image_url' => $image->image_url]);
         
-        // Extract path from the stored URL
-        $path = str_replace(Storage::disk('s3')->url(''), '', $image->image_url);
-        \Log::info("Extracted path: $path");
+        $imageUrl = $image->image_url;
         
-        // Check if file exists in S3
-        if (!Storage::disk('s3')->exists($path)) {
-            \Log::error("File not found in S3: $path");
-            return response()->json(['error' => 'Image not found in storage'], 404);
+        // Check if it's an S3 URL or local storage URL
+        if (str_contains($imageUrl, 'staynest-images.s3.eu-central-2.idrivee2.com')) {
+            // Handle S3 images
+            $path = str_replace(Storage::disk('s3')->url(''), '', $imageUrl);
+            \Log::info("S3 image - Extracted path: $path");
+            
+            if (!Storage::disk('s3')->exists($path)) {
+                \Log::error("File not found in S3: $path");
+                return response()->json(['error' => 'Image not found in S3 storage'], 404);
+            }
+            
+            $file = Storage::disk('s3')->get($path);
+            $mimeType = Storage::disk('s3')->mimeType($path);
+            
+        } else {
+            // Handle local storage images
+            \Log::info("Local storage image");
+            
+            // Extract the path from the local URL
+            $path = str_replace(url('storage/'), '', $imageUrl);
+            $fullPath = storage_path('app/public/' . $path);
+            
+            \Log::info("Local path: $fullPath");
+            
+            if (!file_exists($fullPath)) {
+                \Log::error("Local file not found: $fullPath");
+                return response()->json(['error' => 'Local image not found'], 404);
+            }
+            
+            $file = file_get_contents($fullPath);
+            $mimeType = mime_content_type($fullPath);
         }
         
-        // Get the file from S3
-        $file = Storage::disk('s3')->get($path);
-        $mimeType = Storage::disk('s3')->mimeType($path);
         $fileSize = strlen($file);
-        
         \Log::info("File retrieved successfully", [
             'mime_type' => $mimeType,
             'file_size' => $fileSize
