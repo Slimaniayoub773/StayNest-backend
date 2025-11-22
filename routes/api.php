@@ -42,6 +42,8 @@ use App\Http\Controllers\UserController;
 use App\Models\Guest;
 use App\Models\Payment;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
+
 // routes/api.php
 // About page data routes
 Route::get('/home-page', [AboutController::class, 'getHomePageData']);
@@ -324,3 +326,17 @@ Route::get('/debug-notifications-detailed', function (Request $request) {
     ]);
 })->middleware('auth:sanctum');
 
+Route::get('/images/proxy/{roomId}/{imageId}', function ($roomId, $imageId) {
+    $image = \App\Models\RoomImage::where('room_id', $roomId)->findOrFail($imageId);
+    
+    // Extract path from the stored URL
+    $path = str_replace(Storage::disk('s3')->url(''), '', $image->image_url);
+    
+    // Get the file from S3
+    $file = Storage::disk('s3')->get($path);
+    $mimeType = Storage::disk('s3')->mimeType($path);
+    
+    return response($file, 200)
+        ->header('Content-Type', $mimeType)
+        ->header('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+});
