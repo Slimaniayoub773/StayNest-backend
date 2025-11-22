@@ -10,26 +10,26 @@ use Illuminate\Support\Facades\Storage;
 class RoomImageController extends Controller
 {
     public function index($roomId)
-    {
-        $room = Room::findOrFail($roomId);
-        $images = $room->images()->orderBy('is_primary', 'desc')->get();
-        
-        // Transform image URLs to full URLs
-        $images->transform(function ($image) {
-            $image->image_url = asset($image->image_url);
-            return $image;
-        });
-        
-        return response()->json([
-            'success' => true,
-            'data' => $images
-        ]);
-    }
+{
+    $room = Room::findOrFail($roomId);
+    $images = $room->images()->orderBy('is_primary', 'desc')->get();
+    
+    // Remove the transformation - URLs are already full S3 URLs
+    // $images->transform(function ($image) {
+    //     $image->image_url = asset($image->image_url);
+    //     return $image;
+    // });
+    
+    return response()->json([
+        'success' => true,
+        'data' => $images
+    ]);
+}
 
     public function store(Request $request, $roomId)
 {
     $request->validate([
-        'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:10240', // 10 MB
+        'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:10240',
         'is_primary' => 'sometimes|boolean'
     ]);
 
@@ -37,7 +37,12 @@ class RoomImageController extends Controller
 
     if ($request->hasFile('image')) {
         $path = $request->file('image')->store('room_images', 's3');
-$url = Storage::disk('s3')->url($path);
+        
+        // Make the file publicly accessible
+        Storage::disk('s3')->setVisibility($path, 'public');
+        
+        $url = Storage::disk('s3')->url($path);
+
         if ($request->input('is_primary', false)) {
             RoomImage::where('room_id', $roomId)
                 ->where('is_primary', true)

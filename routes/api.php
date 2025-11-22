@@ -138,7 +138,6 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanc
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
-
 Route::get('/room-types', [RoomTypeController::class, 'index']);
 Route::prefix('room-types')->group(function () {
     Route::get('/', [RoomTypeController::class, 'index']);
