@@ -1600,6 +1600,22 @@ public function cancelBooking(Request $request, $bookingId)
         ];
     }
 
+    // Dans votre contrôleur Laravel
+public function proxyImage($filename)
+{
+    try {
+        $url = "https://staynest-images.s3.eu-central-2.idrivee2.com/room_images/" . $filename;
+        
+        $client = new \GuzzleHttp\Client();
+        $response = $client->get($url);
+        
+        return response($response->getBody(), 200)
+            ->header('Content-Type', $response->getHeader('Content-Type')[0])
+            ->header('Cache-Control', 'public, max-age=86400');
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Image not found'], 404);
+    }
+}
     /**
      * Generate receipt URL
      */
