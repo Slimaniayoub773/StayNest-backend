@@ -1766,4 +1766,35 @@ private function notifyCleaningScheduled(CleaningSchedule $cleaning)
 
         \Illuminate\Support\Facades\Notification::send($admins, $notification);
     }
+    public function proxyImage($roomId, $imageId)
+    {
+        try {
+            $room = Room::findOrFail($roomId);
+            $image = RoomImage::where('room_id', $roomId)->findOrFail($imageId);
+            
+            // Get the image URL from the database
+            $imageUrl = $image->image_url;
+            
+            // If it's already a full URL, redirect to it
+            if (filter_var($imageUrl, FILTER_VALIDATE_URL)) {
+                return redirect($imageUrl);
+            }
+            
+            // If it's a path, get the file from storage
+            $fileContents = Storage::disk('s3')->get($imageUrl);
+            $mimeType = Storage::disk('s3')->mimeType($imageUrl);
+            
+            return Response::make($fileContents, 200, [
+                'Content-Type' => $mimeType,
+                'Content-Disposition' => 'inline'
+            ]);
+            
+        } catch (\Exception $e) {
+            // Return a default placeholder image
+            return response()->json([
+                'success' => false,
+                'message' => 'Image not found'
+            ], 404);
+        }
+    }
 }
