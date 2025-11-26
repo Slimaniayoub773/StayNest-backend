@@ -1600,20 +1600,43 @@ public function cancelBooking(Request $request, $bookingId)
         ];
     }
 
-    // Dans votre contrôleur Laravel
+// Dans votre contrôleur Laravel
 public function proxyImage($filename)
 {
     try {
+        // Nettoyer le nom de fichier
+        $filename = urldecode($filename);
+        
+        // Construire l'URL S3 correcte
         $url = "https://staynest-images.s3.eu-central-2.idrivee2.com/room_images/" . $filename;
         
-        $client = new \GuzzleHttp\Client();
+        \Log::info('Proxy image request:', [
+            'filename' => $filename,
+            'url' => $url
+        ]);
+        
+        $client = new \GuzzleHttp\Client([
+            'timeout' => 30,
+            'verify' => false // Désactiver la vérification SSL pour le développement
+        ]);
+        
         $response = $client->get($url);
         
         return response($response->getBody(), 200)
             ->header('Content-Type', $response->getHeader('Content-Type')[0])
-            ->header('Cache-Control', 'public, max-age=86400');
+            ->header('Cache-Control', 'public, max-age=86400')
+            ->header('Access-Control-Allow-Origin', '*');
+            
     } catch (\Exception $e) {
-        return response()->json(['error' => 'Image not found'], 404);
+        \Log::error('Proxy image error:', [
+            'filename' => $filename,
+            'error' => $e->getMessage()
+        ]);
+        
+        // Retourner une image par défaut si l'image n'est pas trouvée
+        return response()->json([
+            'error' => 'Image not found: ' . $e->getMessage()
+        ], 404);
     }
 }
     /**

@@ -415,3 +415,4 @@ Route::get('/debug-all-images', function () {
         })
     ]);
 });
+Route::get('/images/proxy/{filename}', [GuestRoomController::class, 'proxyImage']);
