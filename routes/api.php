@@ -416,3 +416,27 @@ Route::get('/debug-all-images', function () {
     ]);
 });
 Route::get('/images/proxy/{filename}', [GuestRoomController::class, 'proxyImage']);
+Route::get('/debug-room-images/{roomId}', function($roomId) {
+    $room = \App\Models\Room::with('images')->find($roomId);
+    
+    if (!$room) {
+        return response()->json(['error' => 'Room not found'], 404);
+    }
+    
+    $images = $room->images->map(function($image) {
+        return [
+            'id' => $image->id,
+            'original_url' => $image->image_url,
+            'proxy_url' => url("/api/images/proxy/" . urlencode($image->image_url)),
+            'is_primary' => $image->is_primary,
+            'exists_in_s3' => null // You'd need to check this
+        ];
+    });
+    
+    return response()->json([
+        'room_id' => $roomId,
+        'room_number' => $room->room_number,
+        'images' => $images,
+        'primary_image' => $room->images->where('is_primary', true)->first()
+    ]);
+});

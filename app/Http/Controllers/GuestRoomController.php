@@ -1458,17 +1458,17 @@ public function cancelBooking(Request $request, $bookingId)
     /**
      * Helper function to format room data
      */
-    private function formatRoomData($room)
+private function formatRoomData($room)
 {
     $primaryImage = $room->images->where('is_primary', true)->first();
     if (!$primaryImage) {
         $primaryImage = $room->images->first();
     }
+    
+    // Build proper image URLs
     $primaryImageUrl = null;
     if ($primaryImage) {
-        $primaryImageUrl = $primaryImage->image_url 
-            ? 'https://staynest-images.s3.eu-central-2.idrivee2.com/' . $primaryImage->image_url
-            : null;
+        $primaryImageUrl = $this->buildImageUrl($primaryImage->image_url);
     }
 
     $activeOffers = $room->offers->map(function($offer) {
@@ -1504,9 +1504,7 @@ public function cancelBooking(Request $request, $bookingId)
         'images' => $room->images->map(function($img) {
             return [
                 'id' => $img->id,
-                'url' => $img->image_url 
-                    ? 'https://staynest-images.s3.eu-central-2.idrivee2.com/' . $img->image_url
-                    : null,
+                'url' => $this->buildImageUrl($img->image_url),
                 'is_primary' => $img->is_primary,
             ];
         }),
@@ -1531,7 +1529,27 @@ public function cancelBooking(Request $request, $bookingId)
         'maintenance_required' => $room->status === 'maintenance',
     ];
 }
-
+private function buildImageUrl($imagePath)
+{
+    if (!$imagePath) {
+        return null;
+    }
+    
+    // If it's already a full URL, return as is
+    if (str_starts_with($imagePath, 'http')) {
+        return $imagePath;
+    }
+    
+    // If it's an S3 path, build the proxy URL
+    if (str_contains($imagePath, 'staynest-images.s3.eu-central-2.idrivee2.com')) {
+        // Extract just the filename/path after the domain
+        $path = str_replace('https://staynest-images.s3.eu-central-2.idrivee2.com/', '', $imagePath);
+        return url("/api/images/proxy/" . urlencode($path));
+    }
+    
+    // For local paths, build proxy URL
+    return url("/api/images/proxy/" . urlencode($imagePath));
+}
     /**
      * Process payment based on method
      */
@@ -1600,44 +1618,75 @@ public function cancelBooking(Request $request, $bookingId)
         ];
     }
 
-// Dans votre contrôleur Laravel
 public function proxyImage($filename)
 {
     try {
-        // Nettoyer le nom de fichier
+        // Decode the filename
         $filename = urldecode($filename);
         
-        // Construire l'URL S3 correcte
-        $url = "https://staynest-images.s3.eu-central-2.idrivee2.com/room_images/" . $filename;
+        \Log::info('Proxy image request:', ['filename' => $filename]);
         
-        \Log::info('Proxy image request:', [
-            'filename' => $filename,
-            'url' => $url
-        ]);
+        // Build the correct S3 URL
+        $s3Url = "https://staynest-images.s3.eu-central-2.idrivee2.com/{$filename}";
+        
+        \Log::info('S3 URL:', ['url' => $s3Url]);
         
         $client = new \GuzzleHttp\Client([
             'timeout' => 30,
-            'verify' => false // Désactiver la vérification SSL pour le développement
+            'verify' => false, // Disable SSL verification for development
+            'headers' => [
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            ]
         ]);
         
-        $response = $client->get($url);
+        $response = $client->get($s3Url);
+        
+        // Get content type from response or guess from filename
+        $contentType = $response->getHeader('Content-Type')[0] ?? 
+                      mime_content_type_from_filename($filename);
         
         return response($response->getBody(), 200)
-            ->header('Content-Type', $response->getHeader('Content-Type')[0])
+            ->header('Content-Type', $contentType)
             ->header('Cache-Control', 'public, max-age=86400')
             ->header('Access-Control-Allow-Origin', '*');
             
+    } catch (\GuzzleHttp\Exception\RequestException $e) {
+        \Log::error('Proxy image request failed:', [
+            'filename' => $filename,
+            'error' => $e->getMessage(),
+            'code' => $e->getCode()
+        ]);
+        
+        // Return a default image or error
+        return response()->json([
+            'error' => 'Image not found',
+            'message' => $e->getMessage()
+        ], 404);
     } catch (\Exception $e) {
         \Log::error('Proxy image error:', [
             'filename' => $filename,
             'error' => $e->getMessage()
         ]);
         
-        // Retourner une image par défaut si l'image n'est pas trouvée
         return response()->json([
-            'error' => 'Image not found: ' . $e->getMessage()
-        ], 404);
+            'error' => 'Server error: ' . $e->getMessage()
+        ], 500);
     }
+}
+
+// Helper function to guess mime type from filename
+function mime_content_type_from_filename($filename) {
+    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    $mime_types = [
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp',
+        'svg' => 'image/svg+xml',
+    ];
+    
+    return $mime_types[$ext] ?? 'image/jpeg';
 }
     /**
      * Generate receipt URL
