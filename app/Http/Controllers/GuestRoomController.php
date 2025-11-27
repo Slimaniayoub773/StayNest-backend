@@ -1535,16 +1535,16 @@ private function buildImageUrl($imagePath)
         return null;
     }
     
-    // If it's already a full URL, return as is
-    if (str_starts_with($imagePath, 'http')) {
-        return $imagePath;
-    }
-    
-    // If it's an S3 path, build the proxy URL
-    if (str_contains($imagePath, 'staynest-images.s3.eu-central-2.idrivee2.com')) {
+    // If it's already a full URL and contains S3 domain, convert to proxy URL
+    if (str_starts_with($imagePath, 'http') && str_contains($imagePath, 'staynest-images.s3.eu-central-2.idrivee2.com')) {
         // Extract just the filename/path after the domain
         $path = str_replace('https://staynest-images.s3.eu-central-2.idrivee2.com/', '', $imagePath);
         return url("/api/images/proxy/" . urlencode($path));
+    }
+    
+    // If it's already a full URL but not S3, return as is
+    if (str_starts_with($imagePath, 'http')) {
+        return $imagePath;
     }
     
     // For local paths, build proxy URL
