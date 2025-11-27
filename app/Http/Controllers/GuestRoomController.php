@@ -1621,29 +1621,39 @@ private function buildImageUrl($imagePath)
 public function proxyImage($filename)
 {
     try {
-        // Decode the filename
         $filename = urldecode($filename);
         
         \Log::info('Proxy image request:', ['filename' => $filename]);
         
-        // Build the correct S3 URL
+        // Build S3 URL
         $s3Url = "https://staynest-images.s3.eu-central-2.idrivee2.com/{$filename}";
         
         \Log::info('S3 URL:', ['url' => $s3Url]);
         
+        // Create client with AWS signature
         $client = new \GuzzleHttp\Client([
             'timeout' => 30,
-            'verify' => false, // Disable SSL verification for development
-            'headers' => [
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            ]
+            'verify' => false,
         ]);
         
-        $response = $client->get($s3Url);
+        // Create request with proper headers
+        $request = new \GuzzleHttp\Psr7\Request('GET', $s3Url, [
+            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        ]);
         
-        // Get content type from response or guess from filename
+        // Sign the request with AWS credentials
+        $signer = new \Aws\Signature\SignatureV4('s3', 'eu-central-2');
+        $credentials = new \Aws\Credentials\Credentials(
+            env('AWS_ACCESS_KEY_ID'),
+            env('AWS_SECRET_ACCESS_KEY')
+        );
+        
+        $signedRequest = $signer->signRequest($request, $credentials);
+        
+        $response = $client->send($signedRequest);
+        
         $contentType = $response->getHeader('Content-Type')[0] ?? 
-                      mime_content_type_from_filename($filename);
+                      $this->mimeContentTypeFromFilename($filename);
         
         return response($response->getBody(), 200)
             ->header('Content-Type', $contentType)
@@ -1654,14 +1664,21 @@ public function proxyImage($filename)
         \Log::error('Proxy image request failed:', [
             'filename' => $filename,
             'error' => $e->getMessage(),
-            'code' => $e->getCode()
+            'code' => $e->getCode(),
+            'response' => $e->hasResponse() ? $e->getResponse()->getBody()->getContents() : 'No response'
         ]);
         
-        // Return a default image or error
+        // Return default image
+        $defaultImagePath = public_path('default-room-image.jpg');
+        if (file_exists($defaultImagePath)) {
+            return response()->file($defaultImagePath);
+        }
+        
         return response()->json([
             'error' => 'Image not found',
             'message' => $e->getMessage()
         ], 404);
+        
     } catch (\Exception $e) {
         \Log::error('Proxy image error:', [
             'filename' => $filename,
@@ -1674,8 +1691,8 @@ public function proxyImage($filename)
     }
 }
 
-// Helper function to guess mime type from filename
-function mime_content_type_from_filename($filename) {
+private function mimeContentTypeFromFilename($filename)
+{
     $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
     $mime_types = [
         'jpg' => 'image/jpeg',
