@@ -1454,7 +1454,44 @@ public function cancelBooking(Request $request, $bookingId)
     }
 
     // ==================== HELPER METHODS ====================
-
+private function buildImageUrl($imagePath)
+{
+    if (!$imagePath) {
+        return null;
+    }
+    
+    \Log::info('Building image URL:', ['original_path' => $imagePath]);
+    
+    // For both S3 URLs and local paths, use the proxy
+    if (str_starts_with($imagePath, 'http') && str_contains($imagePath, 'staynest-images.s3.eu-central-2.idrivee2.com')) {
+        // Extract the key from S3 URL and create proxy URL
+        $key = str_replace('https://staynest-images.s3.eu-central-2.idrivee2.com/', '', $imagePath);
+        $proxyUrl = url("/api/images/proxy/" . urlencode($key));
+        
+        \Log::info('Converted S3 URL to proxy:', [
+            'original' => $imagePath,
+            'key' => $key,
+            'proxy_url' => $proxyUrl
+        ]);
+        
+        return $proxyUrl;
+    }
+    
+    // If it's already a proxy URL, return as is
+    if (str_contains($imagePath, '/api/images/proxy/')) {
+        return $imagePath;
+    }
+    
+    // For local paths or filenames, create proxy URL
+    $proxyUrl = url("/api/images/proxy/" . urlencode($imagePath));
+    
+    \Log::info('Built proxy URL for local path:', [
+        'original' => $imagePath,
+        'proxy_url' => $proxyUrl
+    ]);
+    
+    return $proxyUrl;
+}
     /**
      * Helper function to format room data
      */
@@ -1528,43 +1565,6 @@ private function formatRoomData($room)
         }),
         'maintenance_required' => $room->status === 'maintenance',
     ];
-}private function buildImageUrl($imagePath)
-{
-    if (!$imagePath) {
-        return null;
-    }
-    
-    \Log::info('Building image URL:', ['original_path' => $imagePath]);
-    
-    // If it's already a full S3 URL, extract the key and create proxy URL
-    if (str_starts_with($imagePath, 'http') && str_contains($imagePath, 'staynest-images.s3.eu-central-2.idrivee2.com')) {
-        // Extract the key from S3 URL
-        $key = str_replace('https://staynest-images.s3.eu-central-2.idrivee2.com/', '', $imagePath);
-        $proxyUrl = url("/api/images/proxy/" . urlencode($key));
-        
-        \Log::info('Converted S3 URL to proxy:', [
-            'original' => $imagePath,
-            'key' => $key,
-            'proxy_url' => $proxyUrl
-        ]);
-        
-        return $proxyUrl;
-    }
-    
-    // If it's already a full URL but not S3, return as is
-    if (str_starts_with($imagePath, 'http')) {
-        return $imagePath;
-    }
-    
-    // For local paths or filenames, create proxy URL
-    $proxyUrl = url("/api/images/proxy/" . urlencode($imagePath));
-    
-    \Log::info('Built proxy URL for local path:', [
-        'original' => $imagePath,
-        'proxy_url' => $proxyUrl
-    ]);
-    
-    return $proxyUrl;
 }
     /**
      * Process credit card payment using Stripe
@@ -1880,4 +1880,28 @@ private function notifyCleaningScheduled(CleaningSchedule $cleaning)
         \Illuminate\Support\Facades\Notification::send($admins, $notification);
     }
     
+    public function testS3Access($filename)
+{
+    try {
+        $s3Path = "room_images/{$filename}";
+        $s3Url = "https://staynest-images.s3.eu-central-2.idrivee2.com/{$s3Path}";
+        
+        $client = new \GuzzleHttp\Client();
+        $response = $client->get($s3Url);
+        
+        return response()->json([
+            'success' => true,
+            'status_code' => $response->getStatusCode(),
+            'filename' => $filename,
+            's3_url' => $s3Url
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+            'filename' => $filename
+        ], 500);
+    }
+}
 }
