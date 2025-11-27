@@ -497,4 +497,40 @@ Route::get('/debug-image/{filename}', function($filename) {
             's3_url' => $s3Url ?? 'not set'
         ], 500);
     }
+});Route::get('/test-s3-access/{filename}', function($filename) {
+    try {
+        $s3Path = "room_images/{$filename}";
+        $s3Url = "https://staynest-images.s3.eu-central-2.idrivee2.com/{$s3Path}";
+        
+        \Log::info('Testing S3 access:', [
+            'filename' => $filename,
+            's3_path' => $s3Path,
+            's3_url' => $s3Url
+        ]);
+        
+        $client = new \GuzzleHttp\Client();
+        $response = $client->get($s3Url);
+        
+        return response()->json([
+            'success' => true,
+            'filename' => $filename,
+            's3_url' => $s3Url,
+            'status_code' => $response->getStatusCode(),
+            'content_type' => $response->getHeader('Content-Type')[0] ?? 'unknown',
+            'content_length' => $response->getHeader('Content-Length')[0] ?? 'unknown'
+        ]);
+        
+    } catch (\Exception $e) {
+        \Log::error('S3 access test failed:', [
+            'filename' => $filename,
+            'error' => $e->getMessage()
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'filename' => $filename,
+            'error' => $e->getMessage(),
+            's3_url' => $s3Url ?? 'not set'
+        ], 500);
+    }
 });

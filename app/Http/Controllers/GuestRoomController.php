@@ -1625,29 +1625,35 @@ public function proxyImage($filename)
         
         \Log::info('Proxy image request:', ['filename' => $filename]);
         
-        // Check if this is a direct S3 filename or a path
-        if (str_contains($filename, 'room_images/')) {
-            // It's already a path, use as is
-            $s3Path = $filename;
+        // Remove any URL encoding and get the clean filename
+        $cleanFilename = urldecode($filename);
+        
+        // Check if it's already a full path or just a filename
+        if (str_contains($cleanFilename, 'room_images/')) {
+            $s3Path = $cleanFilename;
         } else {
-            // It's just a filename, prepend the folder
-            $s3Path = "room_images/{$filename}";
+            $s3Path = "room_images/{$cleanFilename}";
         }
         
         $s3Url = "https://staynest-images.s3.eu-central-2.idrivee2.com/{$s3Path}";
         
-        \Log::info('Final S3 URL:', ['url' => $s3Url, 'path' => $s3Path]);
+        \Log::info('Final S3 URL:', [
+            'original_filename' => $filename,
+            'clean_filename' => $cleanFilename,
+            's3_path' => $s3Path,
+            's3_url' => $s3Url
+        ]);
         
         $client = new \GuzzleHttp\Client([
             'timeout' => 30,
             'verify' => false,
         ]);
         
-        try {
-            $response = $client->get($s3Url);
-            
+        $response = $client->get($s3Url);
+        
+        if ($response->getStatusCode() === 200) {
             $contentType = $response->getHeader('Content-Type')[0] ?? 
-                          $this->mimeContentTypeFromFilename($filename);
+                          $this->mimeContentTypeFromFilename($cleanFilename);
             
             \Log::info('Image proxy success:', [
                 'filename' => $filename,
@@ -1659,46 +1665,9 @@ public function proxyImage($filename)
                 ->header('Content-Type', $contentType)
                 ->header('Cache-Control', 'public, max-age=86400')
                 ->header('Access-Control-Allow-Origin', '*');
-                
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
-            if ($e->getResponse()->getStatusCode() === 404) {
-                \Log::error('Image not found in S3:', [
-                    'filename' => $filename,
-                    's3_path' => $s3Path,
-                    's3_url' => $s3Url
-                ]);
-                
-                // Try alternative path patterns
-                $alternativePaths = [
-                    $filename, // Try without folder
-                    "images/{$filename}",
-                    "uploads/{$filename}",
-                    "room-images/{$filename}"
-                ];
-                
-                foreach ($alternativePaths as $altPath) {
-                    $altUrl = "https://staynest-images.s3.eu-central-2.idrivee2.com/{$altPath}";
-                    \Log::info('Trying alternative path:', ['url' => $altUrl]);
-                    
-                    try {
-                        $altResponse = $client->get($altUrl);
-                        \Log::info('Found image with alternative path:', ['path' => $altPath]);
-                        
-                        $contentType = $altResponse->getHeader('Content-Type')[0] ?? 
-                                      $this->mimeContentTypeFromFilename($filename);
-                        
-                        return response($altResponse->getBody(), 200)
-                            ->header('Content-Type', $contentType)
-                            ->header('Cache-Control', 'public, max-age=86400')
-                            ->header('Access-Control-Allow-Origin', '*');
-                            
-                    } catch (\Exception $altError) {
-                        continue; // Try next alternative
-                    }
-                }
-            }
-            throw $e; // Re-throw if no alternative worked
         }
+        
+        throw new \Exception('Failed to fetch image from S3');
             
     } catch (\Exception $e) {
         \Log::error('Proxy image error:', [
