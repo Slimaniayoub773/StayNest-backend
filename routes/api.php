@@ -470,3 +470,31 @@ Route::get('/debug-proxy-test', function() {
         ], 500);
     }
 });
+Route::get('/debug-image/{filename}', function($filename) {
+    try {
+        $controller = new GuestRoomController(app(\App\Services\NotificationService::class));
+        
+        // Test direct S3 access
+        $s3Path = "room_images/{$filename}";
+        $s3Url = "https://staynest-images.s3.eu-central-2.idrivee2.com/{$s3Path}";
+        
+        $client = new \GuzzleHttp\Client();
+        $response = $client->get($s3Url);
+        
+        return response()->json([
+            'success' => true,
+            'filename' => $filename,
+            's3_url' => $s3Url,
+            'status' => $response->getStatusCode(),
+            'content_type' => $response->getHeader('Content-Type')[0] ?? 'unknown'
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'filename' => $filename,
+            'error' => $e->getMessage(),
+            's3_url' => $s3Url ?? 'not set'
+        ], 500);
+    }
+});

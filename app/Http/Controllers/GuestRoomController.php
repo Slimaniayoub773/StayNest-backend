@@ -1528,18 +1528,27 @@ private function formatRoomData($room)
         }),
         'maintenance_required' => $room->status === 'maintenance',
     ];
-}
-private function buildImageUrl($imagePath)
+}private function buildImageUrl($imagePath)
 {
     if (!$imagePath) {
         return null;
     }
     
-    // If it's already a full URL and contains S3 domain, convert to proxy URL
+    \Log::info('Building image URL:', ['original_path' => $imagePath]);
+    
+    // If it's already a full S3 URL, extract the key and create proxy URL
     if (str_starts_with($imagePath, 'http') && str_contains($imagePath, 'staynest-images.s3.eu-central-2.idrivee2.com')) {
-        // Extract just the filename/path after the domain
-        $path = str_replace('https://staynest-images.s3.eu-central-2.idrivee2.com/', '', $imagePath);
-        return url("/api/images/proxy/" . urlencode($path));
+        // Extract the key from S3 URL
+        $key = str_replace('https://staynest-images.s3.eu-central-2.idrivee2.com/', '', $imagePath);
+        $proxyUrl = url("/api/images/proxy/" . urlencode($key));
+        
+        \Log::info('Converted S3 URL to proxy:', [
+            'original' => $imagePath,
+            'key' => $key,
+            'proxy_url' => $proxyUrl
+        ]);
+        
+        return $proxyUrl;
     }
     
     // If it's already a full URL but not S3, return as is
@@ -1547,24 +1556,16 @@ private function buildImageUrl($imagePath)
         return $imagePath;
     }
     
-    // For local paths, build proxy URL
-    return url("/api/images/proxy/" . urlencode($imagePath));
+    // For local paths or filenames, create proxy URL
+    $proxyUrl = url("/api/images/proxy/" . urlencode($imagePath));
+    
+    \Log::info('Built proxy URL for local path:', [
+        'original' => $imagePath,
+        'proxy_url' => $proxyUrl
+    ]);
+    
+    return $proxyUrl;
 }
-    /**
-     * Process payment based on method
-     */
-    private function processPaymentByMethod($request, $booking)
-    {
-        switch ($request->payment_method) {
-            case 'credit_card':
-                return $this->processCreditCardPayment($request, $booking);
-            case 'bank_transfer':
-                return $this->processBankTransfer($request, $booking);
-            default:
-                return ['success' => false, 'message' => 'Invalid payment method'];
-        }
-    }
-
     /**
      * Process credit card payment using Stripe
      */
@@ -1617,7 +1618,6 @@ private function buildImageUrl($imagePath)
             'receipt_url' => $this->generateReceiptUrl($booking, $transactionId)
         ];
     }
-
 public function proxyImage($filename)
 {
     try {
@@ -1625,47 +1625,86 @@ public function proxyImage($filename)
         
         \Log::info('Proxy image request:', ['filename' => $filename]);
         
-        // Build S3 URL
-        $s3Url = "https://staynest-images.s3.eu-central-2.idrivee2.com/{$filename}";
+        // Check if this is a direct S3 filename or a path
+        if (str_contains($filename, 'room_images/')) {
+            // It's already a path, use as is
+            $s3Path = $filename;
+        } else {
+            // It's just a filename, prepend the folder
+            $s3Path = "room_images/{$filename}";
+        }
         
-        \Log::info('S3 URL:', ['url' => $s3Url]);
+        $s3Url = "https://staynest-images.s3.eu-central-2.idrivee2.com/{$s3Path}";
         
-        // Create client with AWS signature
+        \Log::info('Final S3 URL:', ['url' => $s3Url, 'path' => $s3Path]);
+        
         $client = new \GuzzleHttp\Client([
             'timeout' => 30,
             'verify' => false,
         ]);
         
-        // Create request with proper headers
-        $request = new \GuzzleHttp\Psr7\Request('GET', $s3Url, [
-            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        ]);
-        
-        // Sign the request with AWS credentials
-        $signer = new \Aws\Signature\SignatureV4('s3', 'eu-central-2');
-        $credentials = new \Aws\Credentials\Credentials(
-            env('AWS_ACCESS_KEY_ID'),
-            env('AWS_SECRET_ACCESS_KEY')
-        );
-        
-        $signedRequest = $signer->signRequest($request, $credentials);
-        
-        $response = $client->send($signedRequest);
-        
-        $contentType = $response->getHeader('Content-Type')[0] ?? 
-                      $this->mimeContentTypeFromFilename($filename);
-        
-        return response($response->getBody(), 200)
-            ->header('Content-Type', $contentType)
-            ->header('Cache-Control', 'public, max-age=86400')
-            ->header('Access-Control-Allow-Origin', '*');
+        try {
+            $response = $client->get($s3Url);
             
-    } catch (\GuzzleHttp\Exception\RequestException $e) {
-        \Log::error('Proxy image request failed:', [
+            $contentType = $response->getHeader('Content-Type')[0] ?? 
+                          $this->mimeContentTypeFromFilename($filename);
+            
+            \Log::info('Image proxy success:', [
+                'filename' => $filename,
+                'content_type' => $contentType,
+                'status' => $response->getStatusCode()
+            ]);
+            
+            return response($response->getBody(), 200)
+                ->header('Content-Type', $contentType)
+                ->header('Cache-Control', 'public, max-age=86400')
+                ->header('Access-Control-Allow-Origin', '*');
+                
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            if ($e->getResponse()->getStatusCode() === 404) {
+                \Log::error('Image not found in S3:', [
+                    'filename' => $filename,
+                    's3_path' => $s3Path,
+                    's3_url' => $s3Url
+                ]);
+                
+                // Try alternative path patterns
+                $alternativePaths = [
+                    $filename, // Try without folder
+                    "images/{$filename}",
+                    "uploads/{$filename}",
+                    "room-images/{$filename}"
+                ];
+                
+                foreach ($alternativePaths as $altPath) {
+                    $altUrl = "https://staynest-images.s3.eu-central-2.idrivee2.com/{$altPath}";
+                    \Log::info('Trying alternative path:', ['url' => $altUrl]);
+                    
+                    try {
+                        $altResponse = $client->get($altUrl);
+                        \Log::info('Found image with alternative path:', ['path' => $altPath]);
+                        
+                        $contentType = $altResponse->getHeader('Content-Type')[0] ?? 
+                                      $this->mimeContentTypeFromFilename($filename);
+                        
+                        return response($altResponse->getBody(), 200)
+                            ->header('Content-Type', $contentType)
+                            ->header('Cache-Control', 'public, max-age=86400')
+                            ->header('Access-Control-Allow-Origin', '*');
+                            
+                    } catch (\Exception $altError) {
+                        continue; // Try next alternative
+                    }
+                }
+            }
+            throw $e; // Re-throw if no alternative worked
+        }
+            
+    } catch (\Exception $e) {
+        \Log::error('Proxy image error:', [
             'filename' => $filename,
             'error' => $e->getMessage(),
-            'code' => $e->getCode(),
-            'response' => $e->hasResponse() ? $e->getResponse()->getBody()->getContents() : 'No response'
+            'trace' => $e->getTraceAsString()
         ]);
         
         // Return default image
@@ -1676,21 +1715,11 @@ public function proxyImage($filename)
         
         return response()->json([
             'error' => 'Image not found',
-            'message' => $e->getMessage()
+            'message' => $e->getMessage(),
+            'filename' => $filename
         ], 404);
-        
-    } catch (\Exception $e) {
-        \Log::error('Proxy image error:', [
-            'filename' => $filename,
-            'error' => $e->getMessage()
-        ]);
-        
-        return response()->json([
-            'error' => 'Server error: ' . $e->getMessage()
-        ], 500);
     }
 }
-
 private function mimeContentTypeFromFilename($filename)
 {
     $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
