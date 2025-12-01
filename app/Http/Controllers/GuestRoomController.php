@@ -1462,37 +1462,23 @@ private function buildImageUrl($imagePath)
     
     \Log::info('Building image URL:', ['original_path' => $imagePath]);
     
-    // For both S3 URLs and local paths, use the proxy
-    if (str_starts_with($imagePath, 'http') && str_contains($imagePath, 'staynest-images.s3.eu-central-2.idrivee2.com')) {
-        // Extract the key from S3 URL and create proxy URL
-        $key = str_replace('https://staynest-images.s3.eu-central-2.idrivee2.com/', '', $imagePath);
-        $proxyUrl = url("/api/images/proxy/" . urlencode($key));
-        
-        \Log::info('Converted S3 URL to proxy:', [
-            'original' => $imagePath,
-            'key' => $key,
-            'proxy_url' => $proxyUrl
-        ]);
-        
-        return $proxyUrl;
-    }
-    
-    // If it's already a proxy URL, return as is
-    if (str_contains($imagePath, '/api/images/proxy/')) {
+    // If it's already a full URL, use it directly
+    if (str_starts_with($imagePath, 'http')) {
         return $imagePath;
     }
     
-    // For local paths or filenames, create proxy URL
-    $proxyUrl = url("/api/images/proxy/" . urlencode($imagePath));
+    // If it's an S3 path, extract the filename and use proxy
+    $filename = basename($imagePath);
+    $proxyUrl = url("/api/images/proxy/{$filename}");
     
-    \Log::info('Built proxy URL for local path:', [
+    \Log::info('Built proxy URL:', [
         'original' => $imagePath,
+        'filename' => $filename,
         'proxy_url' => $proxyUrl
     ]);
     
     return $proxyUrl;
-}
-    /**
+}    /**
      * Helper function to format room data
      */
 private function formatRoomData($room)
@@ -1502,10 +1488,10 @@ private function formatRoomData($room)
         $primaryImage = $room->images->first();
     }
     
-    // Build proper image URLs
+    // Build proper image URLs - Use the same pattern as admin
     $primaryImageUrl = null;
     if ($primaryImage) {
-        $primaryImageUrl = $this->buildImageUrl($primaryImage->image_url);
+        $primaryImageUrl = url("/api/images/proxy/{$room->id}/{$primaryImage->id}");
     }
 
     $activeOffers = $room->offers->map(function($offer) {
@@ -1538,10 +1524,10 @@ private function formatRoomData($room)
         'description' => $room->description,
         'status' => $room->status,
         'primary_image' => $primaryImageUrl,
-        'images' => $room->images->map(function($img) {
+        'images' => $room->images->map(function($img) use ($room) {
             return [
                 'id' => $img->id,
-                'url' => $this->buildImageUrl($img->image_url),
+                'url' => url("/api/images/proxy/{$room->id}/{$img->id}"), // Use same pattern as admin
                 'is_primary' => $img->is_primary,
             ];
         }),
