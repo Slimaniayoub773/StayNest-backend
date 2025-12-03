@@ -284,7 +284,7 @@ Route::get('/test-notifications', function (Request $request) {
         'notifications' => $notifications
     ]);
 })->middleware('auth:sanctum');
-Route::get('/debug-images', [RoomServiceItemController::class, 'debugImages']);
+
 Route::middleware('auth:sanctum')->group(function () {
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index']);
