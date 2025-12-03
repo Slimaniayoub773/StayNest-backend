@@ -499,3 +499,5 @@ Route::get('/debug-image/{filename}', function($filename) {
     }
 });
 Route::get('/test-s3-access/{filename}', [GuestRoomController::class, 'testS3Access']);
+Route::get('/debug-images', [RoomServiceItemController::class, 'debugImages']);
+Route::get('/room-service-images/{filename}', [RoomServiceItemController::class, 'proxyImage']);

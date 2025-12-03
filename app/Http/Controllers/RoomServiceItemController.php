@@ -66,26 +66,30 @@ class RoomServiceItemController extends Controller
 
             // Handle image upload to S3
             if ($request->hasFile('image') && $request->file('image')->isValid()) {
-                $image = $request->file('image');
-                
-                // Generate unique filename
-                $filename = 'room-service-items/' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-                
-                // Store in S3
-                $path = Storage::disk('s3')->put($filename, file_get_contents($image), 'public');
-                
-                // Get S3 URL
-                $s3Url = Storage::disk('s3')->url($filename);
-                
-                // Store S3 URL in database
-                $data['image_url'] = $s3Url;
-                
-                Log::info('Image uploaded to S3:', [
-                    'filename' => $filename,
-                    's3_url' => $s3Url
-                ]);
-            }
-
+    $image = $request->file('image');
+    
+    // Generate unique filename
+    $filename = 'room-service-items/' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+    
+    // Store in S3
+    Storage::disk('s3')->put($filename, file_get_contents($image), 'public');
+    
+    // Get S3 URL
+    $s3Url = Storage::disk('s3')->url($filename);
+    
+    // Store S3 URL in database
+    $data['image_url'] = $s3Url;
+    
+    // ALSO store a proxy URL for CORS issues
+    $justFilename = basename($filename);
+    $data['image_proxy_url'] = url("/api/room-service-images/{$justFilename}");
+    
+    Log::info('Image uploaded:', [
+        's3_url' => $s3Url,
+        'proxy_url' => $data['image_proxy_url'],
+        'filename' => $filename
+    ]);
+}
             $item = RoomServiceItem::create($data);
             $item->load('category');
 
@@ -272,4 +276,71 @@ class RoomServiceItemController extends Controller
             ], 500);
         }
     }
+    public function debugImages()
+{
+    $items = RoomServiceItem::all();
+    
+    $debugInfo = [];
+    foreach ($items as $item) {
+        $debugInfo[] = [
+            'id' => $item->id,
+            'name_en' => $item->name_en,
+            'image_url_in_db' => $item->image_url,
+            'is_s3_url' => str_contains($item->image_url ?? '', 'staynest-images.s3.eu-central-2.idrivee2.com'),
+            's3_path' => $item->image_url ? str_replace('https://staynest-images.s3.eu-central-2.idrivee2.com/', '', $item->image_url) : null,
+            'url_works' => $item->image_url ? @get_headers($item->image_url)[0] ?? 'Could not check' : 'No URL',
+        ];
+    }
+    
+    // Also check S3 directly
+    try {
+        $s3Files = Storage::disk('s3')->files('room-service-items');
+        $s3List = [];
+        foreach ($s3Files as $file) {
+            $s3List[] = [
+                'filename' => $file,
+                'url' => Storage::disk('s3')->url($file),
+                'size' => Storage::disk('s3')->size($file),
+                'exists' => Storage::disk('s3')->exists($file),
+            ];
+        }
+    } catch (\Exception $e) {
+        $s3List = ['error' => $e->getMessage()];
+    }
+    
+    return response()->json([
+        'database_items' => $debugInfo,
+        's3_files' => $s3List,
+        'total_items' => count($items),
+        's3_bucket_url' => Storage::disk('s3')->url(''),
+        'current_config' => [
+            'bucket' => config('filesystems.disks.s3.bucket'),
+            'endpoint' => config('filesystems.disks.s3.endpoint'),
+            'use_path_style' => config('filesystems.disks.s3.use_path_style_endpoint'),
+            'region' => config('filesystems.disks.s3.region'),
+        ]
+    ]);
+}
+// In RoomServiceItemController.php
+public function proxyImage($filename)
+{
+    try {
+        $filePath = 'room-service-items/' . urldecode($filename);
+        
+        if (!Storage::disk('s3')->exists($filePath)) {
+            return response()->json(['error' => 'Image not found'], 404);
+        }
+        
+        $file = Storage::disk('s3')->get($filePath);
+        $mimeType = Storage::disk('s3')->mimeType($filePath);
+        
+        return response($file, 200)
+            ->header('Content-Type', $mimeType)
+            ->header('Cache-Control', 'public, max-age=86400')
+            ->header('Access-Control-Allow-Origin', '*');
+            
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Server error'], 500);
+    }
+}
 }
