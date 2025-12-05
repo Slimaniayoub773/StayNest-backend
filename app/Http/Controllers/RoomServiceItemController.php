@@ -321,7 +321,6 @@ class RoomServiceItemController extends Controller
         ]
     ]);
 }
-// In RoomServiceItemController.php
 public function proxyImage($filename)
 {
     try {
