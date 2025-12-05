@@ -67,10 +67,20 @@
 
         // Handle logo upload - store full URL instead of just path
         if ($request->hasFile('logo')) {
-            $logoPath = $request->file('logo')->store('home-page', 'public');
-            // Store the full URL for easier access
-            $data['logo'] = Storage::disk('public')->url($logoPath);
-        }
+    // Handle new logo upload
+    $logoPath = $request->file('logo')->store('home-page', 'public');
+    $data['logo'] = Storage::disk('public')->url($logoPath);
+} elseif ($request->has('logo') && empty($request->input('logo'))) {
+    // Handle logo removal (when logo is empty string)
+    if ($homePage->logo) {
+        $oldPath = str_replace(Storage::disk('public')->url(''), '', $homePage->logo);
+        Storage::disk('public')->delete($oldPath);
+        $data['logo'] = null; // Set to null in database
+    }
+} else {
+    // Keep existing logo
+    unset($data['logo']);
+}
 
         // Check if home page data already exists
         $homePage = HomePage::first();
@@ -136,20 +146,21 @@ public function update(Request $request, $id)
         $data = $request->all();
 
         // Handle logo upload
-        if ($request->hasFile('logo')) {
-            // Delete old logo
-            if ($homePage->logo) {
-                $oldPath = str_replace(Storage::disk('public')->url(''), '', $homePage->logo);
-                Storage::disk('public')->delete($oldPath);
-            }
-            
-            $logoPath = $request->file('logo')->store('home-page', 'public');
-            $data['logo'] = Storage::disk('public')->url($logoPath);
-        } else {
-            // Keep existing logo if not updating
-            unset($data['logo']);
-        }
-
+       if ($request->hasFile('logo')) {
+    // Handle new logo upload
+    $logoPath = $request->file('logo')->store('home-page', 'public');
+    $data['logo'] = Storage::disk('public')->url($logoPath);
+} elseif ($request->has('logo') && empty($request->input('logo'))) {
+    // Handle logo removal (when logo is empty string)
+    if ($homePage->logo) {
+        $oldPath = str_replace(Storage::disk('public')->url(''), '', $homePage->logo);
+        Storage::disk('public')->delete($oldPath);
+        $data['logo'] = null; // Set to null in database
+    }
+} else {
+    // Keep existing logo
+    unset($data['logo']);
+}
         $homePage->update($data);
 
         return response()->json([
