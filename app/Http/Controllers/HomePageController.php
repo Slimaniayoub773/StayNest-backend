@@ -63,34 +63,27 @@
             ], 422);
         }
 
-        $data = $request->all();
-
-        // Handle logo upload - store full URL instead of just path
-        if ($request->hasFile('logo')) {
-    // Handle new logo upload
-    $logoPath = $request->file('logo')->store('home-page', 'public');
-    $data['logo'] = Storage::disk('public')->url($logoPath);
-} elseif ($request->has('logo') && empty($request->input('logo'))) {
-    // Handle logo removal (when logo is empty string)
-    if ($homePage->logo) {
-        $oldPath = str_replace(Storage::disk('public')->url(''), '', $homePage->logo);
-        Storage::disk('public')->delete($oldPath);
-        $data['logo'] = null; // Set to null in database
-    }
-} else {
-    // Keep existing logo
-    unset($data['logo']);
-}
+        $data = $request->except('logo'); // Start with all data except logo
+        
+        // Handle logo upload
+        if ($request->hasFile('logo') && $request->file('logo')->isValid()) {
+            // Upload new logo
+            $logoPath = $request->file('logo')->store('home-page', 'public');
+            $data['logo'] = Storage::disk('public')->url($logoPath);
+        }
+        // Note: If no logo is sent at all, we keep existing logo or leave it null
 
         // Check if home page data already exists
         $homePage = HomePage::first();
         
         if ($homePage) {
             // Update existing
-            if ($request->hasFile('logo') && $homePage->logo) {
-                // Extract path from URL to delete old file
-                $oldPath = str_replace(Storage::disk('public')->url(''), '', $homePage->logo);
-                Storage::disk('public')->delete($oldPath);
+            if (isset($data['logo'])) {
+                // Delete old logo if it exists and we're uploading a new one
+                if ($homePage->logo) {
+                    $oldPath = str_replace(Storage::disk('public')->url(''), '', $homePage->logo);
+                    Storage::disk('public')->delete($oldPath);
+                }
             }
             $homePage->update($data);
             $message = 'Home page updated successfully';
@@ -143,24 +136,22 @@ public function update(Request $request, $id)
             ], 422);
         }
 
-        $data = $request->all();
-
+        $data = $request->except('logo'); // Start with all data except logo
+        
         // Handle logo upload
-       if ($request->hasFile('logo')) {
-    // Handle new logo upload
-    $logoPath = $request->file('logo')->store('home-page', 'public');
-    $data['logo'] = Storage::disk('public')->url($logoPath);
-} elseif ($request->has('logo') && empty($request->input('logo'))) {
-    // Handle logo removal (when logo is empty string)
-    if ($homePage->logo) {
-        $oldPath = str_replace(Storage::disk('public')->url(''), '', $homePage->logo);
-        Storage::disk('public')->delete($oldPath);
-        $data['logo'] = null; // Set to null in database
-    }
-} else {
-    // Keep existing logo
-    unset($data['logo']);
-}
+        if ($request->hasFile('logo') && $request->file('logo')->isValid()) {
+            // Delete old logo if exists
+            if ($homePage->logo) {
+                $oldPath = str_replace(Storage::disk('public')->url(''), '', $homePage->logo);
+                Storage::disk('public')->delete($oldPath);
+            }
+            
+            // Upload new logo
+            $logoPath = $request->file('logo')->store('home-page', 'public');
+            $data['logo'] = Storage::disk('public')->url($logoPath);
+        }
+        // If no logo is sent at all, we keep the existing logo
+
         $homePage->update($data);
 
         return response()->json([
