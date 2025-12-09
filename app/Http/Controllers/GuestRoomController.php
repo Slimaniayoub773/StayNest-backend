@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\Controller; 
 use Illuminate\Support\Facades\DB;
 use App\Models\Room;
 use App\Models\RoomType;
