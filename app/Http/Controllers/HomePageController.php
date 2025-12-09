@@ -284,25 +284,25 @@ class HomePageController extends Controller
      * Proxy method for serving logo images (to avoid CORS issues)
      */
     public function proxyLogo($filename)
-    {
-        try {
-            $filePath = 'home-page-logos/' . urldecode($filename);
-            
-            if (!Storage::disk('s3')->exists($filePath)) {
-                return response()->json(['error' => 'Logo not found'], 404);
-            }
-            
-            $file = Storage::disk('s3')->get($filePath);
-            $mimeType = Storage::disk('s3')->mimeType($filePath);
-            
-            return response($file, 200)
-                ->header('Content-Type', $mimeType)
-                ->header('Cache-Control', 'public, max-age=86400')
-                ->header('Access-Control-Allow-Origin', '*');
-                
-        } catch (\Exception $e) {
-            Log::error('Logo proxy error:', ['error' => $e->getMessage()]);
-            return response()->json(['error' => 'Server error'], 500);
+{
+    try {
+        $filePath = 'home-page-logos/' . urldecode($filename);
+        
+        if (!Storage::disk('s3')->exists($filePath)) {
+            return response()->json(['error' => 'Logo not found'], 404);
         }
+        
+        $file = Storage::disk('s3')->get($filePath);
+        $mimeType = Storage::disk('s3')->mimeType($filePath);
+        
+        return response($file, 200)
+            ->header('Content-Type', $mimeType)
+            ->header('Cache-Control', 'public, max-age=86400')
+            ->header('Access-Control-Allow-Origin', '*');
+            
+    } catch (\Exception $e) {
+        Log::error('Logo proxy error:', ['error' => $e->getMessage()]);
+        return response()->json(['error' => 'Server error'], 500);
     }
+}
 }
