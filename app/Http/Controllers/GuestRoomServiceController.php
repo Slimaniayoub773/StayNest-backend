@@ -43,27 +43,37 @@ class GuestRoomServiceController extends Controller
             
             // Get room service categories with items and include image URLs
             $categories = RoomServiceCategory::with(['items' => function($query) {
-                $query->where('is_available', true)
-                      ->select(['id', 'category_id', 'name_ar', 'name_en', 'description', 
-                               'price', 'preparation_time', 'image_url', 'is_available']);
-            }])->get();
-            
-            return response()->json([
-                'success' => true,
-                'categories' => $categories,
-                'booking' => [
-                    'id' => $activeBooking->id,
-                    'room_number' => $activeBooking->room->room_number
-                ]
-            ]);
-            
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error retrieving menu: ' . $e->getMessage()
-            ], 500);
-        }
+            $query->where('is_available', true)
+                  ->select([
+                    'id', 
+                    'category_id', 
+                    'name_ar', 
+                    'name_en', 
+                    'description', 
+                    'price', 
+                    'preparation_time', 
+                    'image_url', 
+                    'image_proxy_url', // ← AJOUTER CE CHAMP
+                    'is_available'
+                  ]);
+        }])->get();
+        
+        return response()->json([
+            'success' => true,
+            'categories' => $categories,
+            'booking' => [
+                'id' => $activeBooking->id,
+                'room_number' => $activeBooking->room->room_number
+            ]
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error retrieving menu: ' . $e->getMessage()
+        ], 500);
     }
+}
     /**
      * Place a room service order
      */
