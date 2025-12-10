@@ -161,56 +161,57 @@ class GuestRoomController extends Controller
      * Check room availability for specific dates
      */
     public function checkAvailability(Request $request, $id)
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'check_in' => 'required|date|after:today',
-                'check_out' => 'required|date|after:check_in',
-            ]);
-            
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation error',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-            
-            $room = Room::findOrFail($id);
-            
-            $checkIn = $request->check_in;
-            $checkOut = $request->check_out;
-            
-            $isAvailable = !$room->bookings()
-                ->where(function($query) use ($checkIn, $checkOut) {
-                    $query->whereBetween('check_in_date', [$checkIn, $checkOut])
-                          ->orWhereBetween('check_out_date', [$checkIn, $checkOut])
-                          ->orWhere(function($q) use ($checkIn, $checkOut) {
-                              $q->where('check_in_date', '<=', $checkIn)
-                                ->where('check_out_date', '>=', $checkOut);
-                          });
-                })
-                ->whereIn('booking_status', ['confirmed', 'pending'])
-                ->exists();
-            
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'available' => $isAvailable,
-                    'room_id' => $id,
-                    'check_in' => $checkIn,
-                    'check_out' => $checkOut
-                ],
-                'message' => $isAvailable ? 'Room is available' : 'Room is not available for the selected dates'
-            ]);
-            
-        } catch (\Exception $e) {
+{
+    try {
+        $validator = Validator::make($request->all(), [
+            'check_in' => 'required|date|after_or_equal:today',
+            'check_out' => 'required|date|after:check_in',
+        ]);
+        
+        if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error checking availability: ' . $e->getMessage()
-            ], 500);
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
         }
+        
+        $room = Room::findOrFail($id);
+        
+        $checkIn = Carbon::parse($request->check_in)->startOfDay();
+        $checkOut = Carbon::parse($request->check_out)->startOfDay();
+        
+        $isAvailable = !$room->bookings()
+            ->where(function($query) use ($checkIn, $checkOut) {
+                // Check for overlapping dates
+                $query->where(function($q) use ($checkIn, $checkOut) {
+                    // Existing booking starts before the requested check-out
+                    // AND ends after the requested check-in
+                    $q->where('check_in_date', '<', $checkOut)
+                      ->where('check_out_date', '>', $checkIn);
+                });
+            })
+            ->whereIn('booking_status', ['confirmed', 'pending', 'checked_in'])
+            ->exists();
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'available' => $isAvailable,
+                'room_id' => $id,
+                'check_in' => $checkIn->format('Y-m-d'),
+                'check_out' => $checkOut->format('Y-m-d')
+            ],
+            'message' => $isAvailable ? 'Room is available' : 'Room is not available for the selected dates'
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error checking availability: ' . $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * Get booking form data for a specific room
