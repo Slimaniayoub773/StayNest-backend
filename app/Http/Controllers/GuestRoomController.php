@@ -699,7 +699,16 @@ public function getRoomTypes()
             }
             
             // Process payment
-            $paymentResult = $this->processPaymentByMethod($request, $booking);
+            if ($request->payment_method === 'credit_card') {
+    $paymentResult = $this->processCreditCardPayment($request, $booking);
+} elseif ($request->payment_method === 'bank_transfer') {
+    $paymentResult = $this->processBankTransfer($request, $booking);
+} else {
+    return response()->json([
+        'success' => false,
+        'message' => 'Invalid payment method'
+    ], 422);
+}
             
             if (!$paymentResult['success']) {
                 // Notify payment failure
