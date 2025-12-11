@@ -140,8 +140,14 @@
             margin-bottom: 15px;
         }
         
-        .hotel-name {
-            font-size: 20px;
+        .logo {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+        }
+        
+        .logo-placeholder {
+            font-size: 24px;
             font-weight: 700;
             background: linear-gradient(135deg, #92400e 0%, #b45309 100%);
             -webkit-background-clip: text;
@@ -174,14 +180,18 @@
             .response-container, .original-message {
                 padding: 15px;
             }
+            
+            .logo {
+                height: 32px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="email-container">
         <div class="header">
-            <h1>StayNest</h1>
-            <p>Response to Your Inquiry</p>
+            <h1>Response to Your Inquiry</h1>
+            <p>We appreciate you reaching out to us</p>
         </div>
         
         <div class="content">
@@ -208,7 +218,11 @@
         
         <div class="footer">
             <div class="logo-container">
-                <span class="hotel-name">StayNest</span>
+                @if($hotelLogo)
+                    <img src="{{ $hotelLogo }}" alt="StayNest Logo" class="logo">
+                @else
+                    <span class="logo-placeholder">StayNest</span>
+                @endif
             </div>
             <p class="signature">Best regards,<br>The StayNest Team</p>
             <div class="contact-info">
