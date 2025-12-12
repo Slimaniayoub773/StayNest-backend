@@ -28,11 +28,10 @@ class ContactResponseMail extends Mailable
         $homePage = HomePage::first();
         
         if ($homePage && $homePage->logo) {
-            // Convert S3 URL to proxied URL
-            $this->hotelLogo = $this->convertToProxiedUrl($homePage->logo);
-        } else {
-            $this->hotelLogo = null;
-        }
+    $this->hotelLogo = $homePage->logo; // direct URL, perfect for email
+} else {
+    $this->hotelLogo = null;
+}
     }
 
     public function build()
@@ -64,7 +63,7 @@ class ContactResponseMail extends Mailable
         
         if ($filename) {
             // Generate the proxied URL
-            return URL::to('https://helpful-brenna-leorio7-d20bcb58.koyeb.app/api/home-page-logo/' . urlencode($filename));
+            return URL::to('/api/home-page/proxy-logo/' . urlencode($filename));
         }
         
         return $s3Url;
