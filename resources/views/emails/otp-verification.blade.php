@@ -2,94 +2,90 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verify Your Email - StayNest</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        /* Reset and basic styles */
+        body { margin: 0; padding: 0; background-color: #f4f4f4; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        table { border-spacing: 0; border-collapse: collapse; }
+        img { border: 0; display: block; line-height: 100%; outline: none; text-decoration: none; }
         
-        body {
-            font-family: 'Inter', Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background-color: #fffbeb;
-            margin: 0;
-            padding: 20px;
-        }
-        
-        .email-container {
+        .container {
             max-width: 600px;
             margin: 0 auto;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(146, 64, 14, 0.1);
-            border: 1px solid #fed7aa;
             background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
         .header {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            padding: 35px 20px;
+            background: linear-gradient(180deg, #d95a2b 0%, #c44720 100%);
+            padding: 60px 20px 50px 20px;
             text-align: center;
+            color: white;
+            border-bottom-left-radius: 50% 30px;
+            border-bottom-right-radius: 50% 30px;
             position: relative;
-            overflow: hidden;
         }
         
-        .header::before {
-            content: '';
+        .header-stars {
             position: absolute;
-            top: 0;
+            top: 10px;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCI+CiAgPHBhdGggZD0iTTAgMGg2MHY2MEgweiIgZmlsbD0ibm9uZSIvPgogIDxwYXRoIGQ9Ik0zMCAzMG0tMTUgMGE1IDUgMCA1IDAgMTAgMGE1IDUgMCA1IDAtMTAgMCIgc3Ryb2tlPSJyZ2JhKDI0NSwgMTU4LCAxMSwgMC4xNSkiIHN0cm9rZS13aWR0aD0iMS41IiBmaWxsPSJub25lIi8+Cjwvc3ZnPgo=');
-            opacity: 0.4;
-            pointer-events: none;
+            width: 100%;
+            height: 80px;
         }
         
-        .header h1 {
-            color: #fff;
-            margin: 0;
-            font-size: 32px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            position: relative;
-            z-index: 1;
-            text-shadow: 0 2px 4px rgba(146, 64, 14, 0.2);
+        .header-stars circle {
+            fill: white;
         }
         
         .logo-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 10px;
+            text-align: center;
+            margin-bottom: 15px;
         }
         
-        .hotel-name {
-            font-size: 24px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #92400e 0%, #b45309 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .logo {
+            width: 100px;
+            height: auto;
+            display: inline-block;
+        }
+        
+        .brand-name {
+            margin: 0;
+            font-size: 36px;
+            font-weight: bold;
+            letter-spacing: -1px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        .brand-subtitle {
+            margin: 5px 0 0 0;
+            font-size: 18px;
+            opacity: 0.9;
         }
         
         .content {
-            padding: 40px 35px;
-            background-color: #fff;
+            padding: 40px 30px;
         }
         
         .greeting {
-            font-size: 22px;
-            font-weight: 600;
-            color: #1f2937;
+            font-size: 18px;
+            font-weight: bold;
             margin-bottom: 20px;
-            text-align: center;
+            color: #222;
         }
         
         .message {
-            color: #4b5563;
-            margin-bottom: 30px;
-            font-size: 16px;
-            text-align: center;
-            line-height: 1.7;
+            color: #555;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        
+        .brand-highlight {
+            color: #d95a2b;
+            font-weight: bold;
         }
         
         .otp-container {
@@ -101,14 +97,14 @@
             display: inline-block;
             font-size: 42px;
             font-weight: 700;
-            color: #f59e0b;
+            color: #d95a2b;
             letter-spacing: 10px;
             padding: 25px 40px;
-            background: #fffbeb;
-            border: 2px solid #f59e0b;
+            background: #fff8e1;
+            border: 2px solid #d95a2b;
             border-radius: 16px;
             margin: 20px 0;
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+            box-shadow: 0 4px 12px rgba(217, 90, 43, 0.15);
             position: relative;
             overflow: hidden;
         }
@@ -120,7 +116,7 @@
             left: 0;
             right: 0;
             height: 4px;
-            background: linear-gradient(90deg, #f59e0b, #d97706, #f59e0b);
+            background: linear-gradient(90deg, #d95a2b, #c44720, #d95a2b);
             background-size: 200% 100%;
             animation: shimmer 3s infinite linear;
         }
@@ -131,41 +127,24 @@
         }
         
         .expiry-notice {
-            background-color: #fffbeb;
-            border-left: 4px solid #f59e0b;
-            padding: 18px 22px;
-            margin: 30px 0;
-            border-radius: 0 12px 12px 0;
+            background-color: #fff8e1;
+            border-left: 12px solid #d95a2b;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+        }
+        
+        .expiry-notice h3 {
+            color: #d95a2b;
+            margin: 0 0 10px 0;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .expiry-notice div {
+            color: #5d4a3a;
             font-size: 15px;
-            color: #92400e;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .expiry-notice::before {
-            content: '⏰';
-            font-size: 18px;
-        }
-        
-        .security-note {
-            background-color: #fef3c7;
-            border: 1px solid #fcd34d;
-            padding: 18px;
-            margin: 25px 0;
-            border-radius: 12px;
-            font-size: 14px;
-            color: #92400e;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        
-        .security-note::before {
-            content: '🔒';
-            font-size: 16px;
+            line-height: 1.6;
         }
         
         .steps {
@@ -173,23 +152,22 @@
         }
         
         .step {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 25px;
+            background-color: #fff8e1;
+            border: 1px solid #ffcc80;
             padding: 20px;
-            border-radius: 12px;
+            border-radius: 6px;
+            margin-bottom: 30px;
             transition: all 0.3s ease;
-            background: #fffbeb;
         }
         
         .step:hover {
-            background: #fef3c7;
+            background-color: #ffecb3;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1);
+            box-shadow: 0 4px 12px rgba(217, 90, 43, 0.1);
         }
         
         .step-number {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            background: linear-gradient(135deg, #d95a2b 0%, #c44720 100%);
             color: white;
             width: 28px;
             height: 28px;
@@ -199,18 +177,13 @@
             justify-content: center;
             font-size: 14px;
             font-weight: 600;
-            margin-right: 18px;
-            flex-shrink: 0;
-            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
-        }
-        
-        .step-content {
-            flex: 1;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 6px rgba(217, 90, 43, 0.3);
         }
         
         .step-title {
             font-weight: 600;
-            color: #92400e;
+            color: #d95a2b;
             margin-bottom: 6px;
             font-size: 16px;
         }
@@ -221,155 +194,193 @@
             line-height: 1.6;
         }
         
-        .footer {
-            text-align: center;
-            color: #6b7280;
+        .security-note {
+            background-color: #fff8e1;
+            border: 1px solid #ffcc80;
+            padding: 18px;
+            border-radius: 12px;
             font-size: 14px;
-            padding: 30px 35px;
-            background: #fffbeb;
-            border-top: 1px solid #fed7aa;
-        }
-        
-        .support-info {
-            margin-top: 18px;
-            font-size: 13px;
-            color: #9ca3af;
-        }
-        
-        .support-info a {
-            color: #d97706;
-            text-decoration: none;
-        }
-        
-        .support-info a:hover {
-            text-decoration: underline;
+            color: #5d4a3a;
+            text-align: center;
+            margin: 25px 0;
         }
         
         .divider {
             height: 1px;
-            background: linear-gradient(to right, transparent, #fcd34d, transparent);
+            background: linear-gradient(to right, transparent, #ffcc80, transparent);
             margin: 30px 0;
         }
         
-        .brand-highlight {
-            color: #d97706;
-            font-weight: 600;
+        .footer {
+            background-color: #f9f9f9;
+            padding: 30px 20px;
+            text-align: center;
+            border-top: 1px solid #eeeeee;
         }
         
-        @media (max-width: 480px) {
-            body {
-                padding: 10px;
-                background-color: #fff;
+        .footer-logo {
+            max-height: 50px;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        
+        .footer-info {
+            color: #999;
+            font-size: 12px;
+            margin: 5px 0;
+        }
+        
+        .footer-link {
+            color: #d95a2b;
+            text-decoration: none;
+        }
+        
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+        
+        /* Mobile styles */
+        @media screen and (max-width: 600px) {
+            .container { 
+                width: 100% !important; 
+                border-radius: 0;
             }
             
-            .email-container {
-                margin: 0;
-                border-radius: 12px;
-            }
-            
-            .content {
-                padding: 30px 20px;
+            .content { 
+                padding: 20px !important; 
             }
             
             .header {
-                padding: 25px 15px;
+                padding: 40px 15px 30px 15px !important;
             }
             
-            .header h1 {
-                font-size: 26px;
+            .brand-name {
+                font-size: 28px !important;
+            }
+            
+            .brand-subtitle {
+                font-size: 16px !important;
             }
             
             .otp-code {
-                font-size: 32px;
-                letter-spacing: 8px;
-                padding: 20px 25px;
+                font-size: 32px !important;
+                letter-spacing: 8px !important;
+                padding: 20px 25px !important;
             }
             
             .greeting {
-                font-size: 20px;
+                font-size: 16px !important;
             }
             
             .step {
-                padding: 15px;
+                padding: 15px !important;
+                margin-bottom: 20px !important;
             }
         }
     </style>
 </head>
-<body>
-    <div class="email-container">
-        <div class="header">
-            <h1>StayNest</h1>
-        </div>
-        
-        <div class="content">
-            <h2 class="greeting">Hello {{ $name }}!</h2>
-            
-            <p class="message">
-                Thank you for choosing <span class="brand-highlight">StayNest</span>! To complete your registration and secure your account, 
-                please verify your email address using the OTP code below.
-            </p>
-            
-            <div class="otp-container">
-                <div class="otp-code">{{ $otp }}</div>
+<body style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #333333; margin: 0; padding: 0; background-color: #f4f4f4;">
+
+    <div style="width: 100%; background-color: #f4f4f4; padding: 20px 0;">
+        <div class="container">
+            <!-- Header with stars / logo / name -->
+            <div class="header">
+                <!-- Stars / Decorative SVG -->
+                <svg class="header-stars">
+                    <circle cx="50" cy="20" r="3" opacity="0.8"/>
+                    <circle cx="120" cy="35" r="2" opacity="0.7"/>
+                    <circle cx="250" cy="15" r="4" opacity="0.9"/>
+                    <circle cx="350" cy="40" r="3" opacity="0.6"/>
+                    <circle cx="500" cy="25" r="2" opacity="0.7"/>
+                </svg>
+
+                <!-- Logo centered above name -->
+                @if(isset($hotelLogo) && $hotelLogo)
+                    <div class="logo-container">
+                        <img src="{{ $hotelLogo }}" alt="StayNest Logo" class="logo">
+                    </div>
+                @endif
+
+                <h1 class="brand-name">StayNest</h1>
+                <p class="brand-subtitle">Email Verification</p>
             </div>
-            
-            <div class="expiry-notice">
-                This OTP code will expire in <strong>{{ $expiresIn }} minutes</strong>. 
-                Please use it before it expires to ensure your account security.
-            </div>
-            
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
+
+            <!-- Content -->
+            <div class="content">
+                <p class="greeting">Hello {{ $name }}!</p>
+
+                <p class="message">
+                    Thank you for choosing <span class="brand-highlight">StayNest</span>! To complete your registration and secure your account, 
+                    please verify your email address using the OTP code below.
+                </p>
+
+                <div class="otp-container">
+                    <div class="otp-code">{{ $otp }}</div>
+                </div>
+
+                <div class="expiry-notice">
+                    <h3>Important Notice</h3>
+                    <div>
+                        This OTP code will expire in <strong>{{ $expiresIn }} minutes</strong>. 
+                        Please use it before it expires to ensure your account security.
+                    </div>
+                </div>
+
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
                         <div class="step-title">Enter the OTP Code</div>
                         <div class="step-description">
                             Copy the 6-digit code above and enter it in the verification page on our website or app.
                         </div>
                     </div>
-                </div>
-                
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
+                    
+                    <div class="step">
+                        <div class="step-number">2</div>
                         <div class="step-title">Complete Verification</div>
                         <div class="step-description">
                             Click the verify button to complete your email verification process.
                         </div>
                     </div>
-                </div>
-                
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
+                    
+                    <div class="step">
+                        <div class="step-number">3</div>
                         <div class="step-title">Start Exploring</div>
                         <div class="step-description">
                             Once verified, you'll have full access to book stays, manage reservations, and enjoy exclusive member benefits.
                         </div>
                     </div>
                 </div>
+
+                <div class="security-note">
+                    <strong>Security Tip:</strong> Never share your OTP code with anyone. 
+                    StayNest will never ask for your password or OTP via email, phone, or text.
+                </div>
+
+                <div class="divider"></div>
+
+                <p class="message" style="text-align: center; font-size: 14px; color: #888; line-height: 1.5;">
+                    If you didn't request this verification code, please ignore this email or 
+                    contact our support team if you have concerns about your account security.
+                </p>
             </div>
-            
-            <div class="security-note">
-                <strong>Security Tip:</strong> Never share your OTP code with anyone. 
-                StayNest will never ask for your password or OTP via email, phone, or text.
-            </div>
-            
-            <div class="divider"></div>
-            
-            <p class="message" style="font-size: 14px; color: #6b7280;">
-                If you didn't request this verification code, please ignore this email or 
-                contact our support team if you have concerns about your account security.
-            </p>
-        </div>
-        
-        <div class="footer">
-            <p><strong>StayNest Hotel Team</strong></p>
-            <div class="support-info">
-                <p>Need help? Contact our support team at <a href="mailto:support@StayNest.com">support@StayNest.com</a></p>
-                <p>© {{ date('Y') }} StayNest. All rights reserved.</p>
+
+            <!-- Footer -->
+            <div class="footer">
+                @if(isset($hotelLogo) && $hotelLogo)
+                    <img src="{{ $hotelLogo }}" alt="StayNest Logo" class="footer-logo">
+                @else
+                    <div style="display: inline-block; vertical-align: middle;">
+                        <strong style="color: #d95a2b; font-size: 24px; display: block;">StayNest</strong>
+                    </div>
+                @endif
+
+                <p class="footer-info"><strong>StayNest Hotel Team</strong></p>
+                <p class="footer-info">Need help? Contact our support team at <a href="mailto:support@StayNest.com" class="footer-link">support@StayNest.com</a></p>
+                <p class="footer-info">© {{ date('Y') }} StayNest. All rights reserved.</p>
             </div>
         </div>
     </div>
+
 </body>
 </html>
