@@ -256,16 +256,16 @@
 
       <p style="text-align: center; color: #666; font-size: 14px; margin-top: 30px;">
         If you have any further questions, please contact us.<br>
-                We look forward to welcoming you to StayNest.
+        We look forward to welcoming you to StayNest.
       </p>
     </div>
 
     <div class="footer">
       <div style="margin-bottom: 10px;">
         @if(isset($hotelLogo) && $hotelLogo)
-        <img src="{{ $hotelLogo }}" alt="Logo" style="height: 35px;">
-                @else
-        <span class="footer-logo-text">StayNest</span>
+          <img src="{{ $hotelLogo }}" alt="Logo" style="height: 35px;">
+        @else
+          <span class="footer-logo-text">StayNest</span>
         @endif
       </div>
       <p>Phone: +212 636847568 | Email: support@StayNest.com</p>
