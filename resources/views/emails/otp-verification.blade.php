@@ -81,6 +81,7 @@
             color: #555;
             margin-bottom: 25px;
             line-height: 1.6;
+            text-align: center;
         }
         
         .brand-highlight {
@@ -95,42 +96,25 @@
         
         .otp-code {
             display: inline-block;
-            font-size: 42px;
+            font-size: 48px;
             font-weight: 700;
             color: #d95a2b;
-            letter-spacing: 10px;
-            padding: 25px 40px;
+            letter-spacing: 15px;
+            padding: 30px 50px;
             background: #fff8e1;
             border: 2px solid #d95a2b;
             border-radius: 16px;
             margin: 20px 0;
-            box-shadow: 0 4px 12px rgba(217, 90, 43, 0.15);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .otp-code::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #d95a2b, #c44720, #d95a2b);
-            background-size: 200% 100%;
-            animation: shimmer 3s infinite linear;
-        }
-        
-        @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
+            box-shadow: 0 4px 20px rgba(217, 90, 43, 0.2);
+            text-align: center;
+            min-width: 300px;
         }
         
         .expiry-notice {
             background-color: #fff8e1;
             border-left: 12px solid #d95a2b;
             padding: 20px;
-            margin-bottom: 25px;
+            margin: 30px 0;
             border-radius: 4px;
         }
         
@@ -154,61 +138,63 @@
         .step {
             background-color: #fff8e1;
             border: 1px solid #ffcc80;
-            padding: 20px;
-            border-radius: 6px;
-            margin-bottom: 30px;
-            transition: all 0.3s ease;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            position: relative;
+            padding-left: 80px;
         }
         
-        .step:hover {
-            background-color: #ffecb3;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(217, 90, 43, 0.1);
+        .step:last-child {
+            margin-bottom: 0;
         }
         
         .step-number {
+            position: absolute;
+            left: 25px;
+            top: 25px;
             background: linear-gradient(135deg, #d95a2b 0%, #c44720 100%);
             color: white;
-            width: 28px;
-            height: 28px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 20px;
             font-weight: 600;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 6px rgba(217, 90, 43, 0.3);
+            box-shadow: 0 2px 8px rgba(217, 90, 43, 0.3);
         }
         
         .step-title {
             font-weight: 600;
             color: #d95a2b;
-            margin-bottom: 6px;
-            font-size: 16px;
+            margin-bottom: 8px;
+            font-size: 18px;
         }
         
         .step-description {
-            color: #b45309;
-            font-size: 14px;
+            color: #5d4a3a;
+            font-size: 15px;
             line-height: 1.6;
         }
         
         .security-note {
-            background-color: #fff8e1;
-            border: 1px solid #ffcc80;
-            padding: 18px;
-            border-radius: 12px;
+            background-color: #f9f9f9;
+            border: 2px solid #ffcc80;
+            padding: 20px;
+            border-radius: 8px;
             font-size: 14px;
             color: #5d4a3a;
             text-align: center;
-            margin: 25px 0;
+            margin: 30px 0;
+            font-weight: bold;
         }
         
         .divider {
             height: 1px;
             background: linear-gradient(to right, transparent, #ffcc80, transparent);
-            margin: 30px 0;
+            margin: 40px 0;
         }
         
         .footer {
@@ -263,9 +249,11 @@
             }
             
             .otp-code {
-                font-size: 32px !important;
-                letter-spacing: 8px !important;
-                padding: 20px 25px !important;
+                font-size: 36px !important;
+                letter-spacing: 10px !important;
+                padding: 20px 15px !important;
+                min-width: auto !important;
+                width: 90% !important;
             }
             
             .greeting {
@@ -273,8 +261,16 @@
             }
             
             .step {
-                padding: 15px !important;
-                margin-bottom: 20px !important;
+                padding: 20px !important;
+                padding-left: 70px !important;
+            }
+            
+            .step-number {
+                left: 15px !important;
+                top: 20px !important;
+                width: 35px !important;
+                height: 35px !important;
+                font-size: 18px !important;
             }
         }
     </style>
@@ -329,25 +325,31 @@
                 <div class="steps">
                     <div class="step">
                         <div class="step-number">1</div>
-                        <div class="step-title">Enter the OTP Code</div>
-                        <div class="step-description">
-                            Copy the 6-digit code above and enter it in the verification page on our website or app.
+                        <div class="step-content">
+                            <div class="step-title">Enter the OTP Code</div>
+                            <div class="step-description">
+                                Copy the 6-digit code above and enter it in the verification page on our website or app.
+                            </div>
                         </div>
                     </div>
                     
                     <div class="step">
                         <div class="step-number">2</div>
-                        <div class="step-title">Complete Verification</div>
-                        <div class="step-description">
-                            Click the verify button to complete your email verification process.
+                        <div class="step-content">
+                            <div class="step-title">Complete Verification</div>
+                            <div class="step-description">
+                                Click the verify button to complete your email verification process.
+                            </div>
                         </div>
                     </div>
                     
                     <div class="step">
                         <div class="step-number">3</div>
-                        <div class="step-title">Start Exploring</div>
-                        <div class="step-description">
-                            Once verified, you'll have full access to book stays, manage reservations, and enjoy exclusive member benefits.
+                        <div class="step-content">
+                            <div class="step-title">Start Exploring</div>
+                            <div class="step-description">
+                                Once verified, you'll have full access to book stays, manage reservations, and enjoy exclusive member benefits.
+                            </div>
                         </div>
                     </div>
                 </div>
