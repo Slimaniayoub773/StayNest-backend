@@ -24,7 +24,7 @@
         
         <div class="container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
 
-            <!-- Header with stars / shapes and logo -->
+            <!-- Header with stars / logo / name -->
             <div style="background: linear-gradient(180deg, #d95a2b 0%, #c44720 100%);
                         padding: 60px 20px 50px 20px; text-align: center;
                         color: white; border-bottom-left-radius: 50% 30px;
@@ -39,9 +39,11 @@
                     <circle cx="500" cy="25" r="2" fill="white" opacity="0.7"/>
                 </svg>
 
-                <!-- Logo above name -->
+                <!-- Logo centered above name -->
                 @if(isset($hotelLogo) && $hotelLogo)
-                    <img src="{{ $hotelLogo }}" alt="StayNest Logo" class="header-logo" style="width:100px; height:auto; margin-bottom: 15px;">
+                    <div style="text-align:center; margin-bottom: 15px;">
+                        <img src="{{ $hotelLogo }}" alt="StayNest Logo" style="width:100px; height:auto; display:inline-block;">
+                    </div>
                 @endif
 
                 <h1 style="margin: 0; font-size: 36px; font-weight: bold; letter-spacing: -1px; text-shadow: 0 1px 3px rgba(0,0,0,0.2);">
