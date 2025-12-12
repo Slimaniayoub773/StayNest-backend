@@ -305,57 +305,5 @@ class HomePageController extends Controller
         return response()->json(['error' => 'Server error'], 500);
     }
 }
-public function getForInvoice()
-    {
-        try {
-            $homePage = HomePage::first();
-            
-            if (!$homePage) {
-                return response()->json([
-                    'success' => true,
-                    'data' => [
-                        'name' => 'StayNest Hotel',
-                        'logo' => null,
-                        'address' => '',
-                        'city' => '',
-                        'phone' => '',
-                        'email' => ''
-                    ]
-                ], 200);
-            }
 
-            // Get the logo URL (use proxy for S3 URLs)
-            $logoUrl = $homePage->logo;
-            if ($logoUrl && str_contains($logoUrl, 'staynest-images.s3.eu-central-2.idrivee2.com')) {
-                $filename = basename($logoUrl);
-                $logoUrl = url('/api/home-page-logo/' . $filename);
-            }
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'name' => $homePage->name,
-                    'logo' => $logoUrl,
-                    'address' => $homePage->address,
-                    'city' => $homePage->city,
-                    'phone' => $homePage->phone,
-                    'email' => $homePage->email
-                ]
-            ], 200);
-
-        } catch (\Exception $e) {
-            Log::error('Failed to fetch home page data for invoice:', ['error' => $e->getMessage()]);
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'name' => 'StayNest Hotel',
-                    'logo' => null,
-                    'address' => '',
-                    'city' => '',
-                    'phone' => '',
-                    'email' => ''
-                ]
-            ], 200);
-        }
-    }
 }
