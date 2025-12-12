@@ -503,3 +503,4 @@ Route::get('/debug-images', [RoomServiceItemController::class, 'debugImages']);
 Route::get('/room-service-images/{filename}', [RoomServiceItemController::class, 'proxyImage']);
 Route::get('/home-page-logo/{filename}', [HomePageController::class, 'proxyLogo']);
 Route::get('blog-images/{filename}', [BlogController::class, 'proxyBlogImage']);
+Route::get('/home-page-invoice', [HomePageController::class, 'getForInvoice']);
