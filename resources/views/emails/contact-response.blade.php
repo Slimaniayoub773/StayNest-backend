@@ -14,6 +14,7 @@
         @media screen and (max-width: 600px) {
             .container { width: 100% !important; }
             .content-padding { padding: 20px !important; }
+            .header-logo { width: 80px !important; height: auto !important; }
         }
     </style>
 </head>
@@ -23,13 +24,34 @@
         
         <div class="container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
 
-            <div style="background: linear-gradient(180deg, #d95a2b 0%, #c44720 100%); padding: 40px 20px 50px 20px; text-align: center; color: white; border-bottom-left-radius: 50% 30px; border-bottom-right-radius: 50% 30px;">
-                <h1 style="margin: 0; font-size: 36px; font-weight: bold; letter-spacing: -1px; text-shadow: 0 1px 3px rgba(0,0,0,0.2);">StayNest</h1>
+            <!-- Header with stars / shapes and logo -->
+            <div style="background: linear-gradient(180deg, #d95a2b 0%, #c44720 100%);
+                        padding: 60px 20px 50px 20px; text-align: center;
+                        color: white; border-bottom-left-radius: 50% 30px;
+                        border-bottom-right-radius: 50% 30px; position: relative;">
+
+                <!-- Stars / Decorative SVG -->
+                <svg width="100%" height="80" style="position:absolute; top:10px; left:0;">
+                    <circle cx="50" cy="20" r="3" fill="white" opacity="0.8"/>
+                    <circle cx="120" cy="35" r="2" fill="white" opacity="0.7"/>
+                    <circle cx="250" cy="15" r="4" fill="white" opacity="0.9"/>
+                    <circle cx="350" cy="40" r="3" fill="white" opacity="0.6"/>
+                    <circle cx="500" cy="25" r="2" fill="white" opacity="0.7"/>
+                </svg>
+
+                <!-- Logo above name -->
+                @if(isset($hotelLogo) && $hotelLogo)
+                    <img src="{{ $hotelLogo }}" alt="StayNest Logo" class="header-logo" style="width:100px; height:auto; margin-bottom: 15px;">
+                @endif
+
+                <h1 style="margin: 0; font-size: 36px; font-weight: bold; letter-spacing: -1px; text-shadow: 0 1px 3px rgba(0,0,0,0.2);">
+                    StayNest
+                </h1>
                 <p style="margin: 5px 0 0 0; font-size: 18px; opacity: 0.9;">Response to Your Inquiry</p>
             </div>
 
+            <!-- Content -->
             <div class="content-padding" style="padding: 40px 30px;">
-                
                 <p style="font-size: 18px; font-weight: bold; margin-bottom: 20px; color: #222;">
                     Dear {{ $contactMessage->name ?? 'John Smith' }},
                 </p>
@@ -58,6 +80,7 @@
                 </p>
             </div>
 
+            <!-- Footer -->
             <div style="background-color: #f9f9f9; padding: 30px 20px; text-align: center; border-top: 1px solid #eeeeee;">
                 
                 <div style="margin-bottom: 15px;">
