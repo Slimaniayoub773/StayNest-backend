@@ -32,50 +32,40 @@
     }
 
     .header {
-      /* التدرج اللوني البرتقالي */
       background: linear-gradient(135deg, #d95a2b 0%, #e86a35 100%);
       padding: 40px 20px 60px 20px;
       text-align: center;
       color: #fff;
-      /* الانحناء في الأسفل */
       border-radius: 12px 12px 50% 50% / 12px 12px 30px 30px;
       position: relative;
       overflow: hidden;
-      /* مهم جداً لقص الدوائر التي تخرج عن الحدود */
     }
 
-    /* --- Decorative Circles (الدوائر الخفيفة) --- */
+    /* --- Decorative Circles --- */
     .circle {
       position: absolute;
       border-radius: 50%;
       border: 1px solid rgba(255, 255, 255, 0.15);
-      /* حدود بيضاء شفافة */
       z-index: 1;
-      /* خلف النص */
       pointer-events: none;
     }
 
-    /* دائرة 1: كبيرة أعلى اليسار */
     .circle-1 {
       width: 150px;
       height: 150px;
       top: -50px;
       left: -30px;
       border-width: 2px;
-      /* أسمك قليلاً */
     }
 
-    /* دائرة 2: صغيرة بجانب الأولى */
     .circle-2 {
       width: 60px;
       height: 60px;
       top: 20px;
       left: 80px;
       background-color: rgba(255, 255, 255, 0.05);
-      /* تعبئة خفيفة */
     }
 
-    /* دائرة 3: كبيرة جداً على اليمين */
     .circle-3 {
       width: 200px;
       height: 200px;
@@ -84,7 +74,6 @@
       opacity: 0.6;
     }
 
-    /* دائرة 4: صغيرة عائمة في الأعلى */
     .circle-4 {
       width: 40px;
       height: 40px;
@@ -93,12 +82,10 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    /* النصوص فوق الدوائر */
     .header h1,
     .header p {
       position: relative;
       z-index: 10;
-      /* لضمان ظهور النص فوق الدوائر */
     }
 
     .header h1 {
@@ -139,7 +126,6 @@
     .response-box-container {
       display: flex;
       background-color: #f3ecd9;
-      /* لون البيج */
       border-radius: 8px;
       overflow: hidden;
       margin-bottom: 30px;
@@ -148,7 +134,6 @@
 
     .response-bar {
       background-color: #ba5022;
-      /* الشريط الجانبي البرتقالي الغامق */
       width: 15px;
       min-width: 15px;
     }
@@ -169,7 +154,6 @@
     /* --- Original Message Box --- */
     .original-box {
       background-color: #f4f4f4;
-      /* رمادي فاتح */
       border: 1px solid #dcdcdc;
       padding: 25px;
       border-radius: 8px;
@@ -194,12 +178,25 @@
       font-size: 13px;
     }
 
+    .footer-logo {
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .footer-logo img {
+      height: 40px;
+      width: auto;
+      max-width: 200px;
+      object-fit: contain;
+    }
+
     .footer-logo-text {
       font-size: 24px;
       font-weight: 800;
       color: #ba5022;
       display: inline-block;
-      margin-bottom: 10px;
     }
 
     @media (max-width: 480px) {
@@ -214,6 +211,10 @@
       .content {
         padding: 25px 15px;
       }
+      
+      .footer-logo img {
+        height: 30px;
+      }
     }
   </style>
 </head>
@@ -227,7 +228,7 @@
         <div class="circle circle-3"></div>
         <div class="circle circle-4"></div>
 
-        <h1>StayNest</h1>
+        <h1>{{ $hotelName ?? 'StayNest' }}</h1>
         <p>Response to Your Inquiry</p>
       </div>
     </div>
@@ -236,40 +237,39 @@
       <p class="greeting">Dear {{ $contactMessage->name ?? 'John Smith' }}.</p>
 
       <p class="message-intro">
-        Thank you for contacting StayNest. We appreciate you reaching out to us and have reviewed your inquiry.
+        Thank you for contacting {{ $hotelName ?? 'StayNest' }}. We appreciate you reaching out to us and have reviewed your inquiry.
       </p>
 
       <div class="response-box-container">
         <div class="response-bar"></div>
         <div class="response-content">
           <div class="box-title">Our Response:</div>
-          {!! nl2br(e($responseMessage ?? 'Thank you for your interest in StayNest. Regarding your question about
-          booking availability, we are pleased to confirm we have spaces open.')) !!}
+          {!! nl2br(e($responseMessage ?? 'Thank you for your interest in StayNest. Regarding your question about booking availability, we are pleased to confirm we have spaces open.')) !!}
         </div>
       </div>
 
       <div class="original-box">
         <div class="original-title">Your original message:</div>
-        {!! nl2br(e($contactMessage->message ?? 'Hello, I am interested in booking a room for next month. Do you have
-        any special offers?')) !!}
+        {!! nl2br(e($contactMessage->message ?? 'Hello, I am interested in booking a room for next month. Do you have any special offers?')) !!}
       </div>
 
       <p style="text-align: center; color: #666; font-size: 14px; margin-top: 30px;">
         If you have any further questions, please contact us.<br>
-                We look forward to welcoming you to StayNest.
+        We look forward to welcoming you to {{ $hotelName ?? 'StayNest' }}.
       </p>
     </div>
 
     <div class="footer">
-      <div style="margin-bottom: 10px;">
-        @if(isset($hotelLogo) && $hotelLogo)
-        <img src="{{ $hotelLogo }}" alt="Logo" style="height: 35px;">
-                @else
-        <span class="footer-logo-text">StayNest</span>
+      <div class="footer-logo">
+        @if($hotelLogo)
+          <img src="{{ $hotelLogo }}" alt="{{ $hotelName ?? 'StayNest' }} Logo" 
+               style="height: 40px; width: auto; max-width: 200px; object-fit: contain;">
+        @else
+          <span class="footer-logo-text">{{ $hotelName ?? 'StayNest' }}</span>
         @endif
       </div>
       <p>Phone: +212 636847568 | Email: support@StayNest.com</p>
-      <p>© {{ date('Y') }} StayNest. All rights reserved.</p>
+      <p>© {{ date('Y') }} {{ $hotelName ?? 'StayNest' }}. All rights reserved.</p>
     </div>
   </div>
 </body>
