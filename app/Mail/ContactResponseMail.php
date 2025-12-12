@@ -64,7 +64,7 @@ class ContactResponseMail extends Mailable
         
         if ($filename) {
             // Generate the proxied URL
-            return URL::to('/api/home-page/proxy-logo/' . urlencode($filename));
+            return URL::to('https://helpful-brenna-leorio7-d20bcb58.koyeb.app/api/home-page-logo/' . urlencode($filename));
         }
         
         return $s3Url;
