@@ -131,49 +131,30 @@
             line-height: 1.6;
         }
         
-        .steps {
+        .instructions {
             margin: 40px 0;
         }
         
-        .step {
+        .instruction-item {
             background-color: #fff8e1;
             border: 1px solid #ffcc80;
             padding: 25px;
             border-radius: 8px;
             margin-bottom: 20px;
-            position: relative;
-            padding-left: 80px;
         }
         
-        .step:last-child {
+        .instruction-item:last-child {
             margin-bottom: 0;
         }
         
-        .step-number {
-            position: absolute;
-            left: 25px;
-            top: 25px;
-            background: linear-gradient(135deg, #d95a2b 0%, #c44720 100%);
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(217, 90, 43, 0.3);
-        }
-        
-        .step-title {
+        .instruction-title {
             font-weight: 600;
             color: #d95a2b;
             margin-bottom: 8px;
             font-size: 18px;
         }
         
-        .step-description {
+        .instruction-description {
             color: #5d4a3a;
             font-size: 15px;
             line-height: 1.6;
@@ -260,17 +241,8 @@
                 font-size: 16px !important;
             }
             
-            .step {
+            .instruction-item {
                 padding: 20px !important;
-                padding-left: 70px !important;
-            }
-            
-            .step-number {
-                left: 15px !important;
-                top: 20px !important;
-                width: 35px !important;
-                height: 35px !important;
-                font-size: 18px !important;
             }
         }
     </style>
@@ -322,34 +294,25 @@
                     </div>
                 </div>
 
-                <div class="steps">
-                    <div class="step">
-                        <div class="step-number">1</div>
-                        <div class="step-content">
-                            <div class="step-title">Enter the OTP Code</div>
-                            <div class="step-description">
-                                Copy the 6-digit code above and enter it in the verification page on our website or app.
-                            </div>
+                <div class="instructions">
+                    <div class="instruction-item">
+                        <div class="instruction-title">Enter the OTP Code</div>
+                        <div class="instruction-description">
+                            Copy the 6-digit code above and enter it in the verification page on our website or app.
                         </div>
                     </div>
                     
-                    <div class="step">
-                        <div class="step-number">2</div>
-                        <div class="step-content">
-                            <div class="step-title">Complete Verification</div>
-                            <div class="step-description">
-                                Click the verify button to complete your email verification process.
-                            </div>
+                    <div class="instruction-item">
+                        <div class="instruction-title">Complete Verification</div>
+                        <div class="instruction-description">
+                            Click the verify button to complete your email verification process.
                         </div>
                     </div>
                     
-                    <div class="step">
-                        <div class="step-number">3</div>
-                        <div class="step-content">
-                            <div class="step-title">Start Exploring</div>
-                            <div class="step-description">
-                                Once verified, you'll have full access to book stays, manage reservations, and enjoy exclusive member benefits.
-                            </div>
+                    <div class="instruction-item">
+                        <div class="instruction-title">Start Exploring</div>
+                        <div class="instruction-description">
+                            Once verified, you'll have full access to book stays, manage reservations, and enjoy exclusive member benefits.
                         </div>
                     </div>
                 </div>
